@@ -3,63 +3,233 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Công cụ Y khoa - Bắp Tuyền Nhi</title>
+  <title>Công Cụ Tài Liệu - Bắp Tuyền Nhi</title>
+
+  <!-- Thư viện tạo file PDF từ ảnh -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Thư viện đọc chữ từ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <!-- Thư viện tạo file Word (.docx) -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
-    .container { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-    .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-    h2 { margin: 0 0 14px 0; font-size: 17px; color: #0284c7; }
-    .field { margin-bottom: 12px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #64748b; }
-    input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-    input:focus { outline: 2px solid #0284c7; border-color: transparent; }
-    .btn { width: 100%; padding: 10px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #0369a1; }
-    .res { margin-top: 12px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 14px; text-align: center; font-weight: 600; color: #0369a1; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; margin: 0; padding: 24px 16px; color: #1e293b; }
+    .container { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+    header { text-align: center; margin-bottom: 8px; }
+    header h1 { margin: 0 0 6px; font-size: 22px; color: #0f172a; }
+    header p { margin: 0; color: #64748b; font-size: 13.5px; }
+
+    .card { background: #fff; border-radius: 12px; padding: 22px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+    .card h2 { margin: 0 0 8px; font-size: 17px; color: #0284c7; display: flex; align-items: center; gap: 8px; }
+    .card p.desc { margin: 0 0 16px; font-size: 13px; color: #64748b; line-height: 1.5; }
+
+    .dropzone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 24px 16px; text-align: center; cursor: pointer; background: #f8fafc; transition: all 0.2s; }
+    .dropzone:hover { border-color: #0284c7; background: #f0f9ff; }
+    .dropzone .icon { font-size: 32px; display: block; margin-bottom: 6px; }
+    .dropzone span { font-size: 13px; color: #475569; font-weight: 500; }
+
+    .file-info { margin-top: 10px; font-size: 13px; color: #0f172a; font-weight: 600; display: none; }
+    .btn { margin-top: 14px; width: 100%; padding: 11px; border: none; border-radius: 8px; background: #0284c7; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .btn:hover:not(:disabled) { background: #0369a1; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .status { margin-top: 12px; font-size: 13px; font-weight: 600; text-align: center; display: none; }
+    .status.running { color: #0284c7; }
+    .status.success { color: #16a34a; }
+    .status.error { color: #dc2626; }
   </style>
 </head>
 <body>
 
 <div class="container">
+  <header>
+    <h1>Bộ Công Cụ Chuyển Đổi Tài Liệu</h1>
+    <p>Xử lý trực tiếp trên trình duyệt — Bảo mật, không tải file lên server</p>
+  </header>
+
+  <!-- Công cụ 1: Chuyển Ảnh sang PDF -->
   <div class="card">
-    <h2>🩸 Đổi đơn vị đường huyết</h2>
-    <div class="field">
-      <label>Đường huyết (mmol/L)</label>
-      <input type="number" id="gluMmol" placeholder="VD: 6.5" step="0.1" oninput="convertGlu()">
+    <h2>🖼️ Chuyển đổi Ảnh sang PDF</h2>
+    <p class="desc">Chọn một hoặc nhiều ảnh (JPG, PNG). Hệ thống sẽ tự động ghép lần lượt các ảnh thành 1 file PDF khổ A4.</p>
+    
+    <div class="dropzone" onclick="document.getElementById('imgInput').click()">
+      <span class="icon">📁</span>
+      <span>Bấm để chọn ảnh (hoặc nhiều ảnh)</span>
+      <input type="file" id="imgInput" accept="image/png, image/jpeg, image/webp" multiple style="display:none" onchange="handleImageSelect(event)">
     </div>
-    <div class="res" id="gluRes">mg/dL: --</div>
+    <div class="file-info" id="imgFileInfo"></div>
+
+    <button class="btn" id="btnImgToPdf" disabled onclick="convertImgToPdf()">Tạo & Tải File PDF</button>
+    <div class="status" id="imgStatus"></div>
   </div>
 
+  <!-- Công cụ 2: Chuyển PDF sang Word -->
   <div class="card">
-    <h2>⚖️ Tính chỉ số BMI (Châu Á)</h2>
-    <div class="field">
-      <label>Cân nặng (kg)</label>
-      <input type="number" id="weight" placeholder="VD: 60" step="0.5">
+    <h2>📄 Chuyển đổi PDF sang Word (.docx)</h2>
+    <p class="desc">Trích xuất văn bản từ tài liệu PDF và tạo file Word (.docx) tương ứng để chỉnh sửa nội dung dễ dàng.</p>
+    
+    <div class="dropzone" onclick="document.getElementById('pdfInput').click()">
+      <span class="icon">📑</span>
+      <span>Bấm để chọn file PDF</span>
+      <input type="file" id="pdfInput" accept="application/pdf" style="display:none" onchange="handlePdfSelect(event)">
     </div>
-    <div class="field">
-      <label>Chiều cao (cm)</label>
-      <input type="number" id="height" placeholder="VD: 165" step="1">
-    </div>
-    <button class="btn" onclick="calcBMI()">Tính ngay</button>
-    <div class="res" id="bmiRes" style="display:none;"></div>
+    <div class="file-info" id="pdfFileInfo"></div>
+
+    <button class="btn" id="btnPdfToWord" disabled onclick="convertPdfToWord()">Chuyển Sang File Word (.docx)</button>
+    <div class="status" id="pdfStatus"></div>
   </div>
 </div>
 
 <script>
-  function convertGlu() {
-    const v = parseFloat(document.getElementById('gluMmol').value);
-    document.getElementById('gluRes').innerText = v ? `mg/dL: ${(v * 18.018).toFixed(1)}` : 'mg/dL: --';
+  // Cài đặt worker cho pdf.js
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+  // --- 1. XỬ LÝ ẢNH SANG PDF ---
+  let selectedImages = [];
+
+  function handleImageSelect(e) {
+    selectedImages = Array.from(e.target.files);
+    const info = document.getElementById('imgFileInfo');
+    const btn = document.getElementById('btnImgToPdf');
+    if (selectedImages.length > 0) {
+      info.style.display = 'block';
+      info.innerText = `Đã chọn: ${selectedImages.length} ảnh (${selectedImages.map(f => f.name).join(', ')})`;
+      btn.disabled = false;
+    }
   }
 
-  function calcBMI() {
-    const w = parseFloat(document.getElementById('weight').value);
-    const h = parseFloat(document.getElementById('height').value) / 100;
-    if (!w || !h) return;
-    const bmi = (w / (h * h)).toFixed(1);
-    let tag = bmi < 18.5 ? "Thiếu cân" : bmi < 23 ? "Bình thường" : bmi < 25 ? "Thừa cân" : "Béo phì";
-    const el = document.getElementById('bmiRes');
-    el.style.display = 'block';
-    el.innerText = `BMI: ${bmi} kg/m² (${tag})`;
+  async function convertImgToPdf() {
+    const status = document.getElementById('imgStatus');
+    status.style.display = 'block';
+    status.className = 'status running';
+    status.innerText = 'Đang ghép ảnh vào PDF...';
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    for (let i = 0; i < selectedImages.length; i++) {
+      const file = selectedImages[i];
+      const dataUrl = await readFileAsDataURL(file);
+
+      if (i > 0) doc.addPage('a4', 'portrait');
+
+      // Tính kích thước ảnh đặt vừa lọt trang A4 (210 x 297 mm, trừ lề 10mm mỗi bên)
+      const imgProps = await getImageProperties(dataUrl);
+      const pageWidth = 190;
+      const pageHeight = 277;
+      let renderW = pageWidth;
+      let renderH = (imgProps.height * pageWidth) / imgProps.width;
+
+      if (renderH > pageHeight) {
+        renderH = pageHeight;
+        renderW = (imgProps.width * pageHeight) / imgProps.height;
+      }
+
+      const x = (210 - renderW) / 2;
+      const y = (297 - renderH) / 2;
+      doc.addImage(dataUrl, 'JPEG', x, y, renderW, renderH);
+    }
+
+    doc.save('tai-lieu-ghep.pdf');
+    status.className = 'status success';
+    status.innerText = '✓ Đã tạo và tải file PDF thành công!';
+  }
+
+  function readFileAsDataURL(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getImageProperties(src) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.width, height: img.height });
+      img.src = src;
+    });
+  }
+
+  // --- 2. XỬ LÝ PDF SANG WORD (.DOCX) ---
+  let selectedPdfFile = null;
+
+  function handlePdfSelect(e) {
+    selectedPdfFile = e.target.files[0];
+    const info = document.getElementById('pdfFileInfo');
+    const btn = document.getElementById('btnPdfToWord');
+    if (selectedPdfFile) {
+      info.style.display = 'block';
+      info.innerText = `Đã chọn: ${selectedPdfFile.name} (${(selectedPdfFile.size / 1024).toFixed(1)} KB)`;
+      btn.disabled = false;
+    }
+  }
+
+  async function convertPdfToWord() {
+    const status = document.getElementById('pdfStatus');
+    status.style.display = 'block';
+    status.className = 'status running';
+    status.innerText = 'Đang đọc và trích xuất chữ từ PDF...';
+
+    try {
+      const arrayBuffer = await selectedPdfFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const paragraphs = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        status.innerText = `Đang đọc trang ${pageNum}/${pdf.numPages}...`;
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        let lastY;
+        let lineText = '';
+
+        for (const item of textContent.items) {
+          if (lastY == null || Math.abs(item.transform[5] - lastY) > 5) {
+            if (lineText.trim()) {
+              paragraphs.push(new docx.Paragraph({
+                children: [new docx.TextRun(lineText.trim())],
+                spacing: { after: 120 }
+              }));
+            }
+            lineText = item.str;
+            lastY = item.transform[5];
+          } else {
+            lineText += ' ' + item.str;
+          }
+        }
+        if (lineText.trim()) {
+          paragraphs.push(new docx.Paragraph({
+            children: [new docx.TextRun(lineText.trim())],
+            spacing: { after: 120 }
+          }));
+        }
+      }
+
+      status.innerText = 'Đang đóng gói file Word (.docx)...';
+      const wordDoc = new docx.Document({
+        sections: [{ properties: {}, children: paragraphs }]
+      });
+
+      const blob = await docx.Packer.toBlob(wordDoc);
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      const originalName = selectedPdfFile.name.replace(/\.[^/.]+$/, "");
+      a.download = `${originalName}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      status.className = 'status success';
+      status.innerText = '✓ Đã chuyển đổi và tải file Word thành công!';
+    } catch (err) {
+      status.className = 'status error';
+      status.innerText = 'Đã có lỗi xảy ra hoặc file PDF scan dạng ảnh không có lớp chữ.';
+    }
   }
 </script>
 
