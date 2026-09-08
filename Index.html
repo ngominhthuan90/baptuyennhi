@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Công cụ Y khoa - Bắp Tuyền Nhi</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; color: #1e293b; }
+    .container { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    h2 { margin: 0 0 14px 0; font-size: 17px; color: #0284c7; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #64748b; }
+    input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    input:focus { outline: 2px solid #0284c7; border-color: transparent; }
+    .btn { width: 100%; padding: 10px; background: #0284c7; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #0369a1; }
+    .res { margin-top: 12px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 14px; text-align: center; font-weight: 600; color: #0369a1; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h2>🩸 Đổi đơn vị đường huyết</h2>
+    <div class="field">
+      <label>Đường huyết (mmol/L)</label>
+      <input type="number" id="gluMmol" placeholder="VD: 6.5" step="0.1" oninput="convertGlu()">
+    </div>
+    <div class="res" id="gluRes">mg/dL: --</div>
+  </div>
+
+  <div class="card">
+    <h2>⚖️ Tính chỉ số BMI (Châu Á)</h2>
+    <div class="field">
+      <label>Cân nặng (kg)</label>
+      <input type="number" id="weight" placeholder="VD: 60" step="0.5">
+    </div>
+    <div class="field">
+      <label>Chiều cao (cm)</label>
+      <input type="number" id="height" placeholder="VD: 165" step="1">
+    </div>
+    <button class="btn" onclick="calcBMI()">Tính ngay</button>
+    <div class="res" id="bmiRes" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+  function convertGlu() {
+    const v = parseFloat(document.getElementById('gluMmol').value);
+    document.getElementById('gluRes').innerText = v ? `mg/dL: ${(v * 18.018).toFixed(1)}` : 'mg/dL: --';
+  }
+
+  function calcBMI() {
+    const w = parseFloat(document.getElementById('weight').value);
+    const h = parseFloat(document.getElementById('height').value) / 100;
+    if (!w || !h) return;
+    const bmi = (w / (h * h)).toFixed(1);
+    let tag = bmi < 18.5 ? "Thiếu cân" : bmi < 23 ? "Bình thường" : bmi < 25 ? "Thừa cân" : "Béo phì";
+    const el = document.getElementById('bmiRes');
+    el.style.display = 'block';
+    el.innerText = `BMI: ${bmi} kg/m² (${tag})`;
+  }
+</script>
+
+</body>
+</html>
