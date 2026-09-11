@@ -5,20 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bắp Tuyền Nhi - Bộ Công Cụ Trực Tuyến</title>
 
-  <!-- Thư viện nén ZIP & Tạo PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Thư viện giải mã PDF kèm CMap tiếng Việt -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <!-- Thư viện tạo file Word .docx & xuất file -->
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <!-- Thư viện tạo file PDF từ ảnh -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; }
 
-    /* Layout 2 cột: Sidebar trái & Main content phải */
     .app-layout { display: flex; width: 100vw; min-height: 100vh; }
     
     .sidebar { width: 260px; background: #1e293b; border-right: 1px solid #334155; padding: 20px 14px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
     .brand { font-size: 16px; font-weight: 800; color: #38bdf8; padding: 10px 12px; margin-bottom: 12px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; color: #94a3b8; font-size: 13.5px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; border: none; background: transparent; width: 100%; text-align: left; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; color: #94a3b8; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: transparent; width: 100%; text-align: left; }
     .nav-item:hover { background: #334155; color: #f8fafc; }
     .nav-item.active { background: #0284c7; color: #fff; box-shadow: 0 4px 12px rgba(2,132,199,0.3); }
 
@@ -30,16 +35,6 @@
     .panel h1 { font-size: 22px; color: #38bdf8; margin-bottom: 6px; }
     .sub-title { font-size: 13px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; }
 
-    /* UI Converter Bar */
-    .p2w-format-bar { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; }
-    .p2w-format-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-    .p2w-format-group label { font-size: 11.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
-    .p2w-select { width: 100%; font-size: 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #fff; outline: none; }
-    .p2w-swap-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #475569; background: #0f172a; color: #38bdf8; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-    .p2w-swap-btn:hover { background: #0284c7; color: #fff; transform: rotate(180deg); }
-    .p2w-format-hint { font-size: 12px; color: #94a3b8; margin-bottom: 16px; }
-    .p2w-format-hint.warn { color: #f87171; font-weight: bold; }
-
     .dropzone { border: 2px dashed #475569; border-radius: 14px; padding: 32px 16px; text-align: center; cursor: pointer; background: #0f172a; transition: all 0.2s; }
     .dropzone:hover { border-color: #38bdf8; background: #162238; }
     .dropzone .icon { font-size: 34px; display: block; margin-bottom: 6px; }
@@ -47,25 +42,14 @@
     .dropzone .text b { color: #38bdf8; }
     .dropzone .hint { font-size: 12px; color: #64748b; margin-top: 4px; }
 
-    .file-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-    .file-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: #0f172a; border: 1px solid #334155; font-size: 13px; }
-    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .file-meta { font-size: 11px; color: #64748b; }
-    .badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 12px; background: #334155; color: #cbd5e1; }
-    .badge.working { background: rgba(56,189,248,0.2); color: #38bdf8; }
-    .badge.done { background: rgba(74,222,128,0.2); color: #4ade80; }
-    .badge.error { background: rgba(248,113,113,0.2); color: #f87171; }
-    .dl-btn { font-size: 12px; font-weight: 700; color: #4ade80; text-decoration: none; padding: 3px 8px; border: 1px solid #4ade80; border-radius: 6px; }
-
     .btn-main { width: 100%; margin-top: 16px; padding: 13px; font-size: 14.5px; font-weight: 700; border: none; border-radius: 10px; background: #0284c7; color: #fff; cursor: pointer; transition: 0.15s; }
     .btn-main:hover:not(:disabled) { background: #0369a1; }
     .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-download-zip { width: 100%; margin-top: 10px; padding: 11px; border: 1px solid #4ade80; border-radius: 8px; background: transparent; color: #4ade80; font-size: 13.5px; font-weight: 700; cursor: pointer; }
-    .btn-download-zip:hover { background: #4ade80; color: #0f172a; }
 
     .status-box { margin-top: 14px; font-size: 13px; line-height: 1.6; text-align: center; }
     .status-box.error { color: #f87171; }
     .status-box.success { color: #4ade80; }
+    .status-box.running { color: #38bdf8; }
 
     /* Filter Tool Styles */
     .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -92,74 +76,43 @@
   <!-- SIDEBAR BÊN TRÁI -->
   <nav class="sidebar">
     <div class="brand">🛠️ Bắp Tuyền Nhi Tools</div>
-    <button class="nav-item active" data-target="page-p2w">📄 Đổi Tài Liệu (Word/PDF)</button>
+    <button class="nav-item active" data-target="page-p2w">📝 Chuyển PDF Sang Word</button>
     <button class="nav-item" data-target="page-img2pdf">🖼️ Ghép Ảnh Sang PDF</button>
     <button class="nav-item" data-target="page-filter">🎨 Bộ Lọc Màu Nghệ Thuật</button>
   </nav>
 
-  <!-- VÙNG NỘI DUNG CHÍNH BÊN PHẢI -->
+  <!-- NỘI DUNG CHÍNH BÊN PHẢI -->
   <main class="main-content">
 
-    <!-- TRANG 1: CHUYỂN ĐỔI TÀI LIỆU DÙNG WORKER API -->
+    <!-- TAB 1: PDF SANG WORD (CHẠY TRỰC TIẾP CLIENT) -->
     <div class="page active" id="page-p2w">
       <div class="panel">
-        <h1>Chuyển đổi định dạng tài liệu</h1>
-        <p class="sub-title">Chuyển đổi 2 chiều giữa PDF, Word, Excel, PowerPoint, Ảnh — giữ nguyên cấu trúc bảng biểu, căn lề và định dạng gốc.</p>
+        <h1>Chuyển đổi file PDF sang Word (.docx)</h1>
+        <p class="sub-title">Chuyển đổi trực tiếp ngay trên trình duyệt, hỗ trợ giữ nguyên tiếng Việt có dấu và phân đoạn dòng chuẩn xác.</p>
 
-        <div class="p2w-format-bar">
-          <div class="p2w-format-group">
-            <label for="p2wFromSelect">Chuyển từ</label>
-            <select id="p2wFromSelect" class="p2w-select">
-              <option value="pdf">📄 PDF (.pdf)</option>
-              <option value="docx">📝 Word (.docx, .doc)</option>
-              <option value="xlsx">📊 Excel (.xlsx, .xls)</option>
-              <option value="pptx">📽️ PowerPoint (.pptx, .ppt)</option>
-              <option value="image">🖼️ Ảnh (.png, .jpg)</option>
-            </select>
-          </div>
-
-          <button type="button" class="p2w-swap-btn" id="p2wSwapBtn" title="Đảo chiều">⇄</button>
-
-          <div class="p2w-format-group">
-            <label for="p2wToSelect">Sang</label>
-            <select id="p2wToSelect" class="p2w-select">
-              <option value="docx">📝 Word (.docx)</option>
-              <option value="xlsx">📊 Excel (.xlsx)</option>
-              <option value="pptx">📽️ PowerPoint (.pptx)</option>
-              <option value="image">🖼️ Ảnh (.jpg)</option>
-              <option value="pdf">📄 PDF (.pdf)</option>
-            </select>
-          </div>
+        <div class="dropzone" onclick="document.getElementById('pdfInput').click()">
+          <input type="file" id="pdfInput" accept="application/pdf" hidden onchange="handlePdfPicked(event)">
+          <span class="icon">📄</span>
+          <div class="text"><b id="pdfDropLabel">Bấm để chọn file PDF</b> hoặc kéo thả vào đây</div>
+          <div class="hint">Xử lý nội bộ trên máy, hoàn toàn bảo mật</div>
         </div>
 
-        <div class="p2w-format-hint" id="p2wFormatHint">📄 PDF → 📝 Word</div>
-
-        <div class="dropzone" id="p2wDropzone">
-          <input type="file" id="p2wFileInput" multiple hidden>
-          <span class="icon" id="p2wDropIcon">📄</span>
-          <div class="text"><b>Bấm để chọn file</b> hoặc kéo-thả file vào đây (chọn nhiều file cùng lúc)</div>
-          <div class="hint" id="p2wDropHint">Chỉ nhận file .pdf — tối đa 25MB / file</div>
-        </div>
-
-        <div class="file-list" id="p2wFileList" style="display:none;"></div>
-
-        <button type="button" class="btn-main" id="p2wConvertBtn" disabled>Chuyển PDF → Word</button>
-        <button type="button" class="btn-download-zip" id="p2wDownloadAllBtn" style="display:none;">⬇ Tải tất cả (.zip)</button>
-        <div class="status-box" id="p2wStatus"></div>
+        <button type="button" class="btn-main" id="btnRunPdf" disabled onclick="convertPdfToWordDirect()">Bắt Đầu Chuyển Sang File Word (.docx)</button>
+        <div class="status-box" id="pdfStatusBox"></div>
       </div>
     </div>
 
-    <!-- TRANG 2: GHÉP ẢNH SANG PDF -->
+    <!-- TAB 2: GHÉP ẢNH SANG PDF -->
     <div class="page" id="page-img2pdf">
       <div class="panel">
         <h1>Ghép ảnh sang PDF khổ A4</h1>
         <p class="sub-title">Chọn nhiều ảnh (JPG, PNG) để ghép liên tiếp thành 1 tệp PDF chuẩn khổ giấy A4.</p>
 
         <div class="dropzone" onclick="document.getElementById('imgInput').click()">
-          <input type="file" id="imgInput" accept="image/*" multiple hidden onchange="onImagesPicked(event)">
+          <input type="file" id="imgInput" accept="image/*" multiple hidden onchange="handleImagesPicked(event)">
           <span class="icon">📁</span>
-          <div class="text"><b>Bấm để chọn 1 hoặc nhiều ảnh</b></div>
-          <div class="hint" id="imgPickedHint">Hỗ trợ JPG, PNG, WEBP</div>
+          <div class="text"><b id="imgDropLabel">Bấm để chọn 1 hoặc nhiều ảnh</b></div>
+          <div class="hint">Hỗ trợ JPG, PNG, WEBP</div>
         </div>
 
         <button type="button" class="btn-main" id="btnMakePdf" disabled onclick="convertImagesToPdf()">Tạo &amp; Tải Xuống File PDF</button>
@@ -167,7 +120,7 @@
       </div>
     </div>
 
-    <!-- TRANG 3: BỘ LỌC MÀU NGHỆ THUẬT -->
+    <!-- TAB 3: BỘ LỌC MÀU -->
     <div class="page" id="page-filter">
       <div class="panel">
         <h1>Bộ lọc màu ảnh nghệ thuật</h1>
@@ -176,8 +129,8 @@
         <div class="dropzone" onclick="document.getElementById('filterInput').click()">
           <input type="file" id="filterInput" accept="image/*" hidden onchange="loadPhotoForFilter(event)">
           <span class="icon">✨</span>
-          <div class="text"><b>Bấm để tải ảnh cần lọc màu</b></div>
-          <div class="hint" id="filterFileName">Chất lượng ảnh gốc được giữ nguyên 100%</div>
+          <div class="text"><b id="filterDropLabel">Bấm để tải ảnh cần lọc màu</b></div>
+          <div class="hint">Chất lượng ảnh gốc được giữ nguyên 100%</div>
         </div>
 
         <div class="filter-bar" id="filterBar" style="display:none;">
@@ -211,9 +164,7 @@
 </div>
 
 <script>
-  // ====================================================================
-  // ĐIỀU HƯỚNG TAB SIDEBAR BÊN TRÁI
-  // ====================================================================
+  // Chuyển Tab Sidebar
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -224,230 +175,147 @@
   });
 
   // ====================================================================
-  // TOOL 1: CHUYỂN ĐỔI TÀI LIỆU DÙNG CLOUDFLARE WORKER
+  // LOGIC 1: CHUYỂN PDF SANG WORD TRỰC TIẾP
   // ====================================================================
-  (function () {
-    // Worker chuyển đổi của anh bạn trên Cloudflare
-    const WORKER_URL = 'https://bsdha-pdf-converter.dhabolero.workers.dev/convert';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/cmaps/';
 
-    const dropzone = document.getElementById('p2wDropzone');
-    const fileInput = document.getElementById('p2wFileInput');
-    const fileListEl = document.getElementById('p2wFileList');
-    const convertBtn = document.getElementById('p2wConvertBtn');
-    const statusEl = document.getElementById('p2wStatus');
-    const fromSelect = document.getElementById('p2wFromSelect');
-    const toSelect = document.getElementById('p2wToSelect');
-    const swapBtn = document.getElementById('p2wSwapBtn');
-    const formatHint = document.getElementById('p2wFormatHint');
-    const dropIcon = document.getElementById('p2wDropIcon');
-    const dropHint = document.getElementById('p2wDropHint');
-    const downloadAllBtn = document.getElementById('p2wDownloadAllBtn');
+  let pickedPdfFile = null;
 
-    const MAX_SIZE_BYTES = 25 * 1024 * 1024;
-    const MAX_CONCURRENT = 2;
-    let items = [];
-    let isConverting = false;
-    let seq = 0;
-
-    const FORMATS = {
-      pdf:   { label: 'PDF',        icon: '📄', ext: ['.pdf'],                 accept: 'application/pdf,.pdf' },
-      docx:  { label: 'Word',       icon: '📝', ext: ['.docx', '.doc'],       accept: '.docx,.doc' },
-      xlsx:  { label: 'Excel',      icon: '📊', ext: ['.xlsx', '.xls'],       accept: '.xlsx,.xls' },
-      pptx:  { label: 'PowerPoint', icon: '📽️', ext: ['.pptx', '.ppt'],       accept: '.pptx,.ppt' },
-      image: { label: 'Ảnh',        icon: '🖼️', ext: ['.png', '.jpg', '.jpeg'], accept: '.png,.jpg,.jpeg,image/*' }
-    };
-
-    function isPairSupported(from, to) {
-      if (from === to) return false;
-      return from === 'pdf' || to === 'pdf';
+  function handlePdfPicked(e) {
+    pickedPdfFile = e.target.files[0];
+    if (pickedPdfFile) {
+      document.getElementById('pdfDropLabel').innerText = `Đã chọn: ${pickedPdfFile.name} (${(pickedPdfFile.size/1024).toFixed(1)} KB)`;
+      document.getElementById('btnRunPdf').disabled = false;
     }
+  }
 
-    function outExt(to, contentType) {
-      if (contentType && contentType.includes('zip')) return '.zip';
-      if (to === 'docx') return '.docx';
-      if (to === 'xlsx') return '.xlsx';
-      if (to === 'pptx') return '.pptx';
-      if (to === 'image') return '.jpg';
-      if (to === 'pdf') return '.pdf';
-      return '';
-    }
+  async function convertPdfToWordDirect() {
+    const status = document.getElementById('pdfStatusBox');
+    status.className = 'status-box running';
+    status.innerText = 'Đang giải mã font Unicode và cấu trúc PDF...';
 
-    function fmtSize(bytes) {
-      if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB';
-      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-    }
+    try {
+      const buffer = await pickedPdfFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({
+        data: buffer,
+        cMapUrl: CMAP_URL,
+        cMapPacked: true
+      }).promise;
 
-    function setStatus(html, cls) {
-      statusEl.className = 'status-box' + (cls ? ' ' + cls : '');
-      statusEl.innerHTML = html || '';
-    }
+      const paragraphs = [];
 
-    function refreshUI() {
-      const from = fromSelect.value;
-      const to = toSelect.value;
-      fileInput.setAttribute('accept', FORMATS[from].accept);
-      dropIcon.textContent = FORMATS[from].icon;
-      dropHint.textContent = `Chỉ nhận file ${FORMATS[from].ext.join(', ')} — tối đa 25MB / file`;
+      for (let pNum = 1; pNum <= pdf.numPages; pNum++) {
+        status.innerText = `Đang trích xuất trang ${pNum}/${pdf.numPages}...`;
+        const page = await pdf.getPage(pNum);
+        const textContent = await page.getTextContent({ normalizeWhitespace: true });
+        const items = textContent.items;
 
-      const n = items.length;
-      convertBtn.textContent = n > 1 ? `Chuyển đổi hàng loạt (${n} file)` : `Chuyển ${FORMATS[from].label} → ${FORMATS[to].label}`;
+        if (!items || !items.length) continue;
 
-      if (!isPairSupported(from, to)) {
-        formatHint.textContent = from === to ? 'Định dạng nguồn và đích đang giống nhau.' : `Hãy chuyển qua PDF trung gian trước.`;
-        formatHint.classList.add('warn');
-        convertBtn.disabled = true;
-      } else {
-        formatHint.textContent = `${FORMATS[from].icon} ${FORMATS[from].label} → ${FORMATS[to].icon} ${FORMATS[to].label}`;
-        formatHint.classList.remove('warn');
-        convertBtn.disabled = isConverting || items.length === 0;
-      }
-      renderFileList();
-    }
+        // Sắp xếp toạ độ: từ trên xuống dưới, từ trái sang phải
+        items.sort((a, b) => {
+          const yDiff = b.transform[5] - a.transform[5];
+          if (Math.abs(yDiff) > 4) return yDiff;
+          return a.transform[4] - b.transform[4];
+        });
 
-    function renderFileList() {
-      if (!items.length) {
-        fileListEl.style.display = 'none';
-        fileListEl.innerHTML = '';
-        downloadAllBtn.style.display = 'none';
-        return;
-      }
-      fileListEl.style.display = 'flex';
-      const from = fromSelect.value;
-      fileListEl.innerHTML = items.map(it => {
-        let badge = '<span class="badge">Chờ</span>';
-        let dl = '';
-        if (it.status === 'working') badge = '<span class="badge working">Đang chuyển...</span>';
-        if (it.status === 'done') {
-          badge = '<span class="badge done">✅ Xong</span>';
-          dl = `<a class="dl-btn" href="${it.blobUrl}" download="${it.outName}">⬇ Tải</a>`;
+        let lines = [];
+        let curLine = [];
+        let lastY = null;
+
+        for (const it of items) {
+          const s = it.str;
+          if (!s && s !== ' ') continue;
+
+          const y = it.transform[5];
+          if (lastY === null || Math.abs(y - lastY) <= 4) {
+            curLine.push(s);
+            if (lastY === null) lastY = y;
+          } else {
+            if (curLine.length) lines.push(curLine.join(' ').replace(/\s+/g, ' ').trim());
+            curLine = [s];
+            lastY = y;
+          }
         }
-        if (it.status === 'error') badge = `<span class="badge error" title="${it.errorMsg}">❌ Lỗi</span>`;
-        return `<div class="file-row">
-          <span>${FORMATS[from].icon}</span>
-          <span class="file-name">${it.file.name}</span>
-          <span class="file-meta">${fmtSize(it.file.size)}</span>
-          ${badge} ${dl}
-        </div>`;
-      }).join('');
+        if (curLine.length) lines.push(curLine.join(' ').replace(/\s+/g, ' ').trim());
 
-      const doneCount = items.filter(it => it.status === 'done').length;
-      downloadAllBtn.style.display = doneCount >= 2 ? 'block' : 'none';
-    }
+        // Đưa vào văn bản Word
+        for (const line of lines) {
+          if (line) {
+            paragraphs.push(
+              new docx.Paragraph({
+                children: [
+                  new docx.TextRun({
+                    text: line,
+                    font: "Calibri",
+                    size: 24, // 12pt
+                    color: "000000"
+                  })
+                ],
+                spacing: { after: 120, line: 276 }
+              })
+            );
+          }
+        }
 
-    fromSelect.addEventListener('change', () => {
-      if (fromSelect.value === toSelect.value) toSelect.value = fromSelect.value === 'pdf' ? 'docx' : 'pdf';
-      refreshUI();
-    });
-    toSelect.addEventListener('change', () => {
-      if (fromSelect.value === toSelect.value) fromSelect.value = toSelect.value === 'pdf' ? 'docx' : 'pdf';
-      refreshUI();
-    });
-    swapBtn.addEventListener('click', () => {
-      const f = fromSelect.value, t = toSelect.value;
-      fromSelect.value = t; toSelect.value = f;
-      items = []; refreshUI();
-    });
+        if (pNum < pdf.numPages) {
+          paragraphs.push(new docx.Paragraph({ children: [new docx.PageBreak()] }));
+        }
+      }
 
-    function pickFiles(files) {
-      if (!files || !files.length) return;
-      const from = fromSelect.value;
-      Array.from(files).forEach(file => {
-        const nameLower = file.name.toLowerCase();
-        if (!FORMATS[from].ext.some(e => nameLower.endsWith(e))) return;
-        if (file.size > MAX_SIZE_BYTES) return;
-        seq += 1;
-        items.push({ id: 'f' + seq, file, status: 'waiting', blobUrl: null, blob: null, outName: '', errorMsg: '' });
+      status.innerText = 'Đang đóng gói file Word (.docx)...';
+
+      const wordDoc = new docx.Document({
+        sections: [{
+          properties: {
+            page: { margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } }
+          },
+          children: paragraphs.length ? paragraphs : [
+            new docx.Paragraph({ children: [new docx.TextRun("File PDF không có văn bản có thể trích xuất.")] })
+          ]
+        }]
       });
-      refreshUI();
+
+      const blob = await docx.Packer.toBlob(wordDoc);
+      const outName = pickedPdfFile.name.replace(/\.[^/.]+$/, "") + ".docx";
+      saveAs(blob, outName);
+
+      status.className = 'status-box success';
+      status.innerText = '✓ Đã chuyển đổi và tải file Word thành công!';
+    } catch (err) {
+      console.error(err);
+      status.className = 'status-box error';
+      status.innerText = 'Lỗi chuyển đổi: ' + (err.message || 'Không thể trích xuất file này');
     }
-
-    dropzone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', () => { pickFiles(fileInput.files); fileInput.value = ''; });
-
-    async function convertOne(it, from, to) {
-      it.status = 'working';
-      renderFileList();
-      try {
-        const form = new FormData();
-        form.append('file', it.file, it.file.name);
-        form.append('from', from);
-        form.append('to', to);
-        const resp = await fetch(WORKER_URL, { method: 'POST', body: form });
-        if (!resp.ok) throw new Error('Lỗi từ server chuyển đổi (' + resp.status + ')');
-        const blob = await resp.blob();
-        const contentType = resp.headers.get('content-type') || blob.type || '';
-        const baseName = it.file.name.replace(/\.[^.]+$/i, '');
-        it.outName = baseName + outExt(to, contentType);
-        it.blob = blob;
-        it.blobUrl = URL.createObjectURL(blob);
-        it.status = 'done';
-      } catch (err) {
-        it.status = 'error';
-        it.errorMsg = err.message || 'Lỗi không xác định';
-      }
-      renderFileList();
-    }
-
-    convertBtn.addEventListener('click', async () => {
-      if (!items.length || isConverting) return;
-      const from = fromSelect.value, to = toSelect.value;
-      isConverting = true;
-      convertBtn.disabled = true;
-      setStatus('Đang gửi file lên Cloudflare Worker xử lý chuyển đổi…');
-
-      for (const it of items) {
-        if (it.status !== 'done') await convertOne(it, from, to);
-      }
-
-      const okCount = items.filter(it => it.status === 'done').length;
-      setStatus(`✅ Hoàn tất chuyển đổi ${okCount}/${items.length} file.`, okCount > 0 ? 'success' : 'error');
-      isConverting = false;
-      convertBtn.disabled = false;
-      renderFileList();
-    });
-
-    downloadAllBtn.addEventListener('click', async () => {
-      const doneItems = items.filter(it => it.status === 'done' && it.blob);
-      if (!doneItems.length) return;
-      downloadAllBtn.disabled = true;
-      downloadAllBtn.textContent = 'Đang đóng gói .zip…';
-      const zip = new JSZip();
-      doneItems.forEach(it => zip.file(it.outName, it.blob));
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(zipBlob);
-      a.download = `chuyen-doi-${Date.now()}.zip`;
-      a.click();
-      downloadAllBtn.disabled = false;
-      downloadAllBtn.textContent = '⬇ Tải tất cả (.zip)';
-    });
-
-    refreshUI();
-  })();
+  }
 
   // ====================================================================
-  // TOOL 2: GHÉP ẢNH SANG FILE PDF KHỔ A4 (ĐÃ TỰ ĐỘNG CĂN CHỈNH)
+  // LOGIC 2: GHÉP ẢNH SANG PDF A4
   // ====================================================================
-  let imageFiles = [];
-  function onImagesPicked(e) {
-    imageFiles = Array.from(e.target.files);
-    if (imageFiles.length) {
-      document.getElementById('imgPickedHint').innerText = `Đã chọn: ${imageFiles.length} ảnh`;
+  let pickedImages = [];
+
+  function handleImagesPicked(e) {
+    pickedImages = Array.from(e.target.files);
+    if (pickedImages.length) {
+      document.getElementById('imgDropLabel').innerText = `Đã chọn: ${pickedImages.length} ảnh`;
       document.getElementById('btnMakePdf').disabled = false;
     }
   }
 
   async function convertImagesToPdf() {
     const status = document.getElementById('imgPdfStatus');
-    status.className = 'status-box';
-    status.innerText = 'Đang xử lý tạo file PDF…';
+    status.className = 'status-box running';
+    status.innerText = 'Đang tạo file PDF...';
 
     try {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i];
+      for (let i = 0; i < pickedImages.length; i++) {
+        status.innerText = `Đang nạp ảnh ${i + 1}/${pickedImages.length}...`;
+        const file = pickedImages[i];
+
         const dataUrl = await new Promise(res => {
           const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file);
         });
@@ -457,7 +325,6 @@
 
         if (i > 0) pdf.addPage('a4', 'portrait');
 
-        // Canh tỷ lệ ảnh vừa trang A4
         const maxW = 190, maxH = 277;
         let rw = maxW, rh = (props.h * maxW) / props.w;
         if (rh > maxH) { rh = maxH; rw = (props.w * maxH) / props.h; }
@@ -466,17 +333,17 @@
         pdf.addImage(dataUrl, 'JPEG', x, y, rw, rh);
       }
 
-      pdf.save('tai-lieu-ghep.pdf');
+      pdf.save('tai-lieu-anh.pdf');
       status.className = 'status-box success';
       status.innerText = '✓ Đã tạo và tải file PDF thành công!';
     } catch (err) {
       status.className = 'status-box error';
-      status.innerText = 'Lỗi: ' + err.message;
+      status.innerText = 'Lỗi tạo PDF: ' + err.message;
     }
   }
 
   // ====================================================================
-  // TOOL 3: BỘ LỌC MÀU NGHỆ THUẬT (CURVE MƯỢT KHÔNG VỠ HẠT)
+  // LOGIC 3: BỘ LỌC ẢNH
   // ====================================================================
   let rawPhoto = null;
   let activeFilter = 'korean';
@@ -484,7 +351,7 @@
   function loadPhotoForFilter(e) {
     const file = e.target.files[0];
     if (!file) return;
-    document.getElementById('filterFileName').innerText = `Đã chọn: ${file.name}`;
+    document.getElementById('filterDropLabel').innerText = `Đã chọn: ${file.name}`;
     const r = new FileReader();
     r.onload = evt => {
       rawPhoto = new Image();
