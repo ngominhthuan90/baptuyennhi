@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#075985">
+  <!-- Không gửi Referer khi tải giọng Google Online dự phòng -->
+  <meta name="referrer" content="no-referrer">
   <title>Hệ thống gọi số khám bệnh</title>
   <style>
     * { box-sizing: border-box; }
@@ -99,6 +101,9 @@
     .modal-btn { border: 0; border-radius: 9px; padding: 10px 15px; color: #fff; background: #334155; cursor: pointer; font-weight: 750; }
     .modal-btn.primary { background: var(--primary); }
     .error { min-height: 18px; margin-top: 10px; color: #fca5a5; font-size: 12px; }
+    .voice-hint { margin-top: 12px; border-left: 3px solid var(--warning); border-radius: 0 9px 9px 0; padding: 10px 12px; color: #cbd5e1; background: rgba(245,158,11,.08); font-size: 12px; line-height: 1.55; }
+    .voice-hint.ok { border-left-color: var(--success); background: rgba(22,163,74,.08); }
+    .voice-hint b { color: #f8fafc; }
     @media (max-width: 780px) {
       .app { padding: 12px; }
       header { align-items: flex-start; flex-direction: column; }
@@ -201,8 +206,9 @@
   <dialog id="voiceDialog">
     <form class="modal" method="dialog" id="voiceForm">
       <h3>Cài đặt giọng đọc</h3>
-      <p>Ưu tiên chọn giọng có ngôn ngữ “vi-VN”. Nếu máy chưa có, hãy cài giọng tiếng Việt trong Windows/Android.</p>
+      <p>Danh sách gồm các giọng tiếng Việt mà trình duyệt và hệ điều hành của máy này có sẵn, cùng giọng Google Online dự phòng.</p>
       <div class="field"><label for="voiceSelect">Giọng nói</label><select id="voiceSelect"></select></div>
+      <div class="voice-hint" id="voiceHint"></div>
       <div class="field"><label for="rate">Tốc độ đọc: <span id="rateValue">0.85</span></label><input id="rate" type="range" min="0.6" max="1.2" value="0.85" step="0.05"></div>
       <div class="modal-actions">
         <button class="modal-btn" type="button" onclick="this.closest('dialog').close()">Đóng</button>
@@ -269,44 +275,83 @@
       setTimeout(() => $('unlockPin').focus(), 50);
     }
 
-    function currentVoice() {
-      const chosen = localStorage.getItem(KEYS.voice);
-      return voices.find(v => v.name === chosen) || voices.find(v => /^vi(-|_)/i.test(v.lang)) || voices.find(v => /vietnam/i.test(v.name)) || null;
-    }
-   function speak(number, counter) {
-      const text = `Mời số thứ tự ${number}. Xin mời số thứ tự ${number}, đến quầy số ${counter}.`;
-      const voice = currentVoice();
-      const rate = Number(localStorage.getItem(KEYS.rate) || 0.85);
+    // ===================== GIỌNG ĐỌC TIẾNG VIỆT =====================
+    // Danh sách giọng do TRÌNH DUYỆT + HỆ ĐIỀU HÀNH của từng máy cung cấp (Web Speech API);
+    // trang web/GitHub không thể tự thêm giọng. Muốn có giọng tiếng Việt: mở trang bằng Microsoft Edge,
+    // hoặc cài giọng Tiếng Việt cho Windows/Android rồi mở lại trình duyệt.
+    const ONLINE_VOICE = '__google_online_vi__';   // mục "Google Online" dự phòng trong danh sách
+    let currentAudio = null;
+    let currentUtterance = null;                    // giữ tham chiếu để Chrome không làm mất sự kiện onend
 
-      // Ưu tiên 1: Nếu máy tính đã có sẵn giọng tiếng Việt thì dùng luôn
-      if (voice && /^vi(-|_)/i.test(voice.lang)) {
-        if (!('speechSynthesis' in window)) return;
-        speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'vi-VN';
-        utterance.rate = rate;
-        utterance.voice = voice;
-        utterance.onstart = () => $('status').textContent = `Đang mời số ${pad(number)} đến quầy ${counter}`;
-        utterance.onend = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
-        speechSynthesis.speak(utterance);
-      } 
-      // Ưu tiên 2: Nếu máy KHÔNG CÓ tiếng Việt (như trong hình của bạn), lấy giọng Google Online
-      else {
-        $('status').textContent = `Đang tải giọng Online... Mời số ${pad(number)} đến quầy ${counter}`;
-        
-        // Tạo liên kết âm thanh tiếng Việt trực tiếp từ máy chủ Google
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(text)}`;
-        const audio = new Audio(url);
-        audio.playbackRate = rate;
-        
-        audio.play().then(() => {
-          $('status').textContent = `Đang gọi số ${pad(number)} · Quầy ${counter} (Bằng giọng Online)`;
-          audio.onended = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
-        }).catch(err => {
-          $('status').textContent = 'Lỗi: Máy tính phải có mạng Internet để phát giọng Online.';
-        });
-      }
+    function isViVoice(v) { return /^vi([-_]|$)/i.test(v.lang) || /vietnam/i.test(v.name); }
+    function refreshVoices() {
+      if ('speechSynthesis' in window) voices = speechSynthesis.getVoices();
+      return voices;
     }
+    // Chỉ giữ giọng tiếng Việt; giọng "Natural" (tự nhiên hơn) xếp lên đầu
+    function viVoices() {
+      return voices.filter(isViVoice)
+        .sort((a, b) => (/natural/i.test(b.name) - /natural/i.test(a.name)) || a.name.localeCompare(b.name));
+    }
+    // Giọng sẽ dùng: giọng tiếng Việt đã chọn → giọng tiếng Việt tốt nhất trên máy → null (= Google Online)
+    function currentVoice() {
+      if (!voices.length) refreshVoices();
+      const chosen = localStorage.getItem(KEYS.voice);
+      if (chosen === ONLINE_VOICE) return null;
+      const list = viVoices();
+      return list.find(v => v.name === chosen) || list[0] || null;
+    }
+
+    function speak(number, counter) {
+      const text = `Mời số thứ tự ${number}. Xin mời số thứ tự ${number}, đến quầy số ${counter}.`;
+      const rate = Number(localStorage.getItem(KEYS.rate) || 0.85);
+      let voice = currentVoice();
+      // Đang mất mạng mà giọng đã chọn cần Internet → chuyển sang giọng tiếng Việt offline (nếu máy có)
+      if (voice && !voice.localService && navigator.onLine === false) voice = viVoices().find(v => v.localService) || voice;
+      if (voice) speakWithVoice(voice, text, rate, number, counter, new Set());
+      else speakOnline(text, rate, number, counter);
+    }
+
+    // Đọc bằng giọng tiếng Việt có sẵn trên máy / trình duyệt
+    function speakWithVoice(voice, text, rate, number, counter, tried) {
+      stopAudio();
+      speechSynthesis.cancel();
+      tried.add(voice.name);
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance;
+      utterance.voice = voice;
+      utterance.lang = 'vi-VN';
+      utterance.rate = rate;
+      utterance.onstart = () => $('status').textContent = `Đang mời số ${pad(number)} đến quầy ${counter}`;
+      utterance.onend = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
+      utterance.onerror = e => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;   // bị ngắt vì vừa gọi số khác
+        // Giọng bị lỗi (vd. giọng Online của Edge khi mất mạng) → thử giọng tiếng Việt offline khác → Google Online
+        const next = viVoices().find(v => v.localService && !tried.has(v.name));
+        if (next) speakWithVoice(next, text, rate, number, counter, tried);
+        else speakOnline(text, rate, number, counter);
+      };
+      speechSynthesis.speak(utterance);
+    }
+
+    // Dự phòng: giọng Google Dịch (đường link không chính thức, cần Internet, có thể bị Google chặn bất cứ lúc nào)
+    function speakOnline(text, rate, number, counter) {
+      stopAudio();
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      $('status').textContent = `Đang tải giọng Online... Mời số ${pad(number)} đến quầy ${counter}`;
+      const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(text)}`);
+      currentAudio = audio;
+      audio.playbackRate = rate;
+      audio.onplaying = () => $('status').textContent = `Đang gọi số ${pad(number)} · Quầy ${counter} (giọng Online)`;
+      audio.onended = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
+      audio.play().catch(() => {
+        if (currentAudio === audio) $('status').textContent = 'Không phát được giọng Online (kiểm tra Internet). Nên cài giọng tiếng Việt cho máy – xem nút 🎙️ Giọng đọc.';
+      });
+    }
+    function stopAudio() {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    }
+
     function callNext() {
       if (state.date !== todayKey()) state = newState();
       state.current += 1;
@@ -360,13 +405,38 @@
       $('pinDialog').close(); render(); $('status').textContent = 'Đã đổi mã PIN thành công.';
     });
 
-    function loadVoices() {
-      voices = speechSynthesis.getVoices();
-      const selected = localStorage.getItem(KEYS.voice);
-      $('voiceSelect').innerHTML = voices.length ? voices.map(v => `<option value="${escapeHtml(v.name)}" ${v.name === selected ? 'selected' : ''}>${escapeHtml(v.name)} — ${escapeHtml(v.lang)}</option>`).join('') : '<option>Đang tải danh sách giọng nói…</option>';
-      if (!selected) { const vi = voices.find(v => /^vi(-|_)/i.test(v.lang)); if (vi) $('voiceSelect').value = vi.name; }
+    // Hướng dẫn cài giọng tiếng Việt hiện ngay trong hộp "Cài đặt giọng đọc"
+    const IS_ANDROID = /Android/i.test(navigator.userAgent);
+    const INSTALL_STEPS = (IS_ANDROID
+      ? 'Android: <b>Cài đặt → tìm “Chuyển văn bản thành giọng nói” → Dịch vụ lời nói của Google → ⚙ → Cài đặt dữ liệu giọng nói → Tiếng Việt</b>'
+      : 'Windows: <b>Cài đặt → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt</b> (Settings → Time &amp; language → Speech → Add voices)')
+      + ', rồi tắt hẳn và mở lại trình duyệt.';
+    function voiceHintHtml(list) {
+      if (!list.length) {
+        return '⚠️ Máy này chưa có giọng tiếng Việt nên đang dùng giọng Google Online (cần Internet, có thể bị gián đoạn). Cách thêm giọng tiếng Việt:'
+          + `<br>• Cài giọng cho máy – ${INSTALL_STEPS}`
+          + (IS_ANDROID ? '' : '<br>• Hoặc mở trang này bằng <b>Microsoft Edge</b> (có sẵn giọng HoaiMy, NamMinh – cần Internet).');
+      }
+      if (list.some(v => v.localService)) {
+        return `✅ Có ${list.length} giọng tiếng Việt. Nếu Internet ở điểm khám không ổn định, hãy chọn giọng không ghi “cần Internet”.`;
+      }
+      return `✅ Có ${list.length} giọng tiếng Việt nhưng đều cần Internet. Để vẫn gọi số được khi mất mạng, cài thêm giọng cho máy – ${INSTALL_STEPS}`;
     }
-    if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+    function loadVoices() {
+      refreshVoices();
+      const list = viVoices();
+      const voice = currentVoice();
+      $('voiceSelect').innerHTML = list.map(v =>
+        `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)} — ${escapeHtml(v.lang)}${v.localService ? '' : ' · cần Internet'}</option>`
+      ).join('') + `<option value="${ONLINE_VOICE}">🌐 Tiếng Việt – Google Online (dự phòng)</option>`;
+      $('voiceSelect').value = voice ? voice.name : ONLINE_VOICE;
+
+      const hint = $('voiceHint');
+      hint.classList.toggle('ok', list.length > 0);
+      hint.innerHTML = voiceHintHtml(list);
+    }
+    loadVoices();
+    if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = loadVoices;
     $('voiceBtn').addEventListener('click', () => {
       $('rate').value = localStorage.getItem(KEYS.rate) || '0.85'; $('rateValue').textContent = $('rate').value; loadVoices(); $('voiceDialog').showModal();
     });
