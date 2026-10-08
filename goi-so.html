@@ -273,12 +273,12 @@
       const chosen = localStorage.getItem(KEYS.voice);
       return voices.find(v => v.name === chosen) || voices.find(v => /^vi(-|_)/i.test(v.lang)) || voices.find(v => /vietnam/i.test(v.name)) || null;
     }
-    function speak(number, counter) {
+   function speak(number, counter) {
       const text = `Mời số thứ tự ${number}. Xin mời số thứ tự ${number}, đến quầy số ${counter}.`;
       const voice = currentVoice();
       const rate = Number(localStorage.getItem(KEYS.rate) || 0.85);
 
-      // KIỂM TRA: Nếu máy CÓ sẵn giọng tiếng Việt thì dùng giọng của máy
+      // Ưu tiên 1: Nếu máy tính đã có sẵn giọng tiếng Việt thì dùng luôn
       if (voice && /^vi(-|_)/i.test(voice.lang)) {
         if (!('speechSynthesis' in window)) return;
         speechSynthesis.cancel();
@@ -290,24 +290,23 @@
         utterance.onend = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
         speechSynthesis.speak(utterance);
       } 
-      // DỰ PHÒNG: Nếu máy KHÔNG có giọng tiếng Việt, tự động lấy giọng Google Online
+      // Ưu tiên 2: Nếu máy KHÔNG CÓ tiếng Việt (như trong hình của bạn), lấy giọng Google Online
       else {
-        $('status').textContent = `Đang mời số ${pad(number)} đến quầy ${counter} (Đang tải giọng Online...)`;
+        $('status').textContent = `Đang tải giọng Online... Mời số ${pad(number)} đến quầy ${counter}`;
         
-        // Gọi API ẩn của Google Dịch để lấy file âm thanh tiếng Việt
+        // Tạo liên kết âm thanh tiếng Việt trực tiếp từ máy chủ Google
         const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(text)}`;
         const audio = new Audio(url);
         audio.playbackRate = rate;
         
         audio.play().then(() => {
-          $('status').textContent = `Đang mời số ${pad(number)} đến quầy ${counter} (Giọng Online)`;
+          $('status').textContent = `Đang gọi số ${pad(number)} · Quầy ${counter} (Bằng giọng Online)`;
           audio.onended = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
         }).catch(err => {
-          $('status').textContent = 'Lỗi âm thanh: Trình duyệt chặn tự động phát hoặc mất mạng.';
+          $('status').textContent = 'Lỗi: Máy tính phải có mạng Internet để phát giọng Online.';
         });
       }
     }
-
     function callNext() {
       if (state.date !== todayKey()) state = newState();
       state.current += 1;
