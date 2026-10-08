@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#082b35"><title>Gọi số thứ tự • Bắp Tuyền Nhi</title>
+<style>
+:root{font-family:Segoe UI,Arial,sans-serif;color:#e9f5f3;background:#082b35;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#154957,transparent 70%);min-height:100vh}header,main,footer{max-width:1100px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid #ffffff20}.brand{font-weight:700;letter-spacing:.1em;font-size:14px}.badge{color:#96e7c9;font-size:13px}h1{font-size:clamp(24px,4vw,40px);margin:0 0 12px;letter-spacing:-.03em}.intro{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:10px 0 24px}p{line-height:1.6;color:#afc8ce;margin:6px 0}.board{border:1px solid #ffffff24;border-radius:28px;background:#09252ecc;text-align:center;padding:26px 24px;box-shadow:0 24px 60px #00171f55}.eyebrow{font-size:16px;color:#afd2d8;letter-spacing:.18em}.number{font-size:clamp(110px,24vw,240px);font-weight:750;font-variant-numeric:tabular-nums;line-height:1.15;letter-spacing:.04em;color:#bcf7d6;text-shadow:0 0 55px #89ffbe20}.next-label{color:#afc8ce;font-size:17px}.controls{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:24px}button,input,select{font:inherit}button{cursor:pointer;border:1px solid #ffffff28;background:#1c4652;color:#f0fbff;border-radius:12px;padding:14px 20px;font-weight:650;transition:background .15s}button:hover{background:#2c5c69}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #f5cf83;outline-offset:4px}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:#b8f5d2;color:#093c32;font-size:22px;padding:22px}.primary:hover{background:#d4ffe5}.secondary{font-size:19px}.utility{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.status{min-height:28px;margin:15px 0 0;color:#a4ead0}.status.error{color:#ffcc96}.history{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:44px;margin-top:18px;font-size:14px;color:#acc8cd}.pill{border:1px solid #ffffff28;border-radius:8px;padding:6px 12px;font-size:18px;color:#fff;font-variant-numeric:tabular-nums}details{margin-top:24px;border:1px solid #ffffff24;border-radius:18px;padding:20px;background:#0d313b}summary{cursor:pointer;font-weight:650}.settings{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}label{display:block;color:#c4dedf;font-size:14px}input,select{width:100%;margin-top:8px;background:#082832;color:#fff;border:1px solid #52717a;border-radius:9px;padding:12px}input[type=range]{padding:0;accent-color:#b8f5d2}.row{display:flex;align-items:end;gap:10px}.row label{flex:1}.help{font-size:13px;margin-top:12px}.danger{color:#ffd0b6}.small{font-size:13px}footer{color:#85a6af;font-size:12px;padding-top:0}a{color:#b8f5d2}.display-mode .operator,.display-mode .intro,.display-mode footer{display:none}.display-mode main{max-width:none}.display-mode .board{min-height:75vh;display:flex;flex-direction:column;justify-content:center}.display-mode .number{font-size:clamp(180px,32vw,430px)}.display-mode .exit{display:block}.exit{display:none}@media(max-width:620px){header,main,footer{padding:18px}.controls,.settings{grid-template-columns:1fr}.intro{align-items:flex-start}.primary{font-size:20px}.brand{font-size:11px}.badge{font-size:11px}.board{padding:25px 12px}.row{flex-wrap:wrap}}
+</style></head>
+<body>
+<header><div class="brand">BẮP TUYỀN NHI <span class="badge"> / GỌI SỐ</span></div><span id="clock" class="small"></span><button class="exit" id="exit">Về điều khiển</button></header>
+<main>
+<div class="intro"><div><h1>Gọi số thứ tự</h1><p>Một lần bấm. Một lượt phục vụ.</p></div><span class="badge">001 — 999 / ngày</span></div>
+<section class="board" aria-label="Số thứ tự hiện tại"><div class="eyebrow">XIN MỜI SỐ</div><div id="number" class="number" aria-live="polite">— — —</div><div class="next-label" id="nextLabel">Sẵn sàng bắt đầu từ 001</div></section>
+<div class="operator">
+<div class="controls"><button class="primary" id="next">Gọi số tiếp theo · 001</button><button class="secondary" id="repeat" disabled>↻ Gọi lại</button></div>
+<div class="utility"><button id="test">♫ Thử loa</button><button id="stop" disabled>Dừng tiếng</button><button id="display">Màn hình lớn</button></div>
+<p id="status" class="status" role="status">Bấm “Thử loa” để kiểm tra âm thanh trước khi gọi.</p>
+<div class="history"><span>Vừa gọi</span><span id="history">Chưa có lượt gọi</span></div>
+<details><summary>Cài đặt & hướng dẫn</summary><div class="settings">
+<label>Âm lượng <span id="volText">100%</span><input id="volume" type="range" min="10" max="100" value="100"></label>
+<label>Số lần đọc mỗi lượt<select id="times"><option value="1">1 lần</option><option value="2">2 lần</option></select></label>
+<div class="row"><label>Số sẽ gọi tiếp theo<input id="start" type="number" min="1" max="999" step="1" value="1"></label><button id="set">Áp dụng</button></div>
+<div class="row"><button class="danger" id="reset">Bắt đầu lại từ 001</button></div></div>
+<p class="help">Âm thanh tiếng Việt được kèm sẵn, đọc từng chữ số: 001 → “không không một”. Không cần cài giọng nói, đăng nhập hoặc mã PIN. Sau khi tải xong âm thanh, trang đang mở có thể tiếp tục gọi khi mất mạng.</p>
+<p class="help">Sang ngày mới (giờ Việt Nam), hệ thống tự bắt đầu lại từ 001. Số được lưu trên trình duyệt này; tải lại trang không làm mất số. Dùng một máy để điều khiển, có thể nối màn hình/TV và loa ngoài. Máy khác, trình duyệt khác hoặc chế độ ẩn danh có bộ đếm riêng.</p>
+<p class="help">Phím tắt: <b>N</b> gọi tiếp · <b>R</b> gọi lại · <b>Esc</b> dừng tiếng / thoát màn hình lớn. Khi đang đọc, nút gọi tiếp được khóa để tránh bấm nhầm.</p>
+</details></div></main>
+<footer>Gọi số đơn giản • Dữ liệu lưu trên thiết bị • <a href="../">Về trang công cụ</a></footer>
+<script src="audio.js"></script><script src="app.js"></script>
+</body></html>
