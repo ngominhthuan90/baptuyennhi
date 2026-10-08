@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#075985">
+  <title>Hệ thống gọi số khám bệnh</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: rgba(15, 23, 42, .94);
+      --line: #334155;
+      --muted: #94a3b8;
+      --primary: #0284c7;
+      --primary2: #38bdf8;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(14,165,233,.18), transparent 32%),
+        radial-gradient(circle at 85% 80%, rgba(34,197,94,.10), transparent 30%),
+        var(--bg);
+    }
+    button, select, input { font: inherit; }
+    button { touch-action: manipulation; }
+    .app { width: min(1180px, 100%); margin: 0 auto; padding: 18px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      margin-bottom: 18px;
+    }
+    .brand h1 { margin: 0; color: var(--primary2); font-size: clamp(20px, 3vw, 30px); }
+    .brand p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .small-btn, .back-link {
+      border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px;
+      background: #0f172a; color: #e2e8f0; text-decoration: none; cursor: pointer;
+    }
+    .small-btn:hover, .back-link:hover { border-color: var(--primary2); }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, .8fr); gap: 18px; }
+    .panel {
+      border: 1px solid var(--line); border-radius: 18px; padding: clamp(18px, 3vw, 28px);
+      background: var(--panel); box-shadow: 0 20px 45px rgba(0,0,0,.24);
+    }
+    .counter-select { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
+    .counter-select label { color: var(--muted); font-weight: 700; }
+    .counter-select select {
+      border: 1px solid #475569; border-radius: 9px; padding: 9px 34px 9px 12px;
+      background: #0b1220; color: #fff; font-weight: 800;
+    }
+    .number-card {
+      position: relative; overflow: hidden; text-align: center; border: 1px solid #075985;
+      border-radius: 20px; padding: 22px 12px 28px;
+      background: linear-gradient(145deg, rgba(2,132,199,.20), rgba(15,23,42,.2));
+    }
+    .number-card::after {
+      content: ""; position: absolute; inset: auto -20% -55% 30%; height: 180px;
+      background: rgba(56,189,248,.09); border-radius: 50%; filter: blur(6px);
+    }
+    .number-label { color: #bae6fd; letter-spacing: .12em; font-weight: 800; font-size: 13px; }
+    .number { position: relative; z-index: 1; margin: 4px 0; font-size: clamp(86px, 17vw, 172px); line-height: .95; font-weight: 900; letter-spacing: .035em; }
+    .desk { position: relative; z-index: 1; color: #7dd3fc; font-size: clamp(20px, 3vw, 30px); font-weight: 850; }
+    .status { min-height: 23px; margin: 14px 0 0; text-align: center; color: #86efac; font-size: 14px; }
+    .actions { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-top: 18px; }
+    .action-btn { border: 0; border-radius: 14px; padding: 18px 12px; color: #fff; cursor: pointer; font-weight: 900; }
+    .next { background: linear-gradient(135deg, #0284c7, #0369a1); font-size: 22px; box-shadow: 0 8px 25px rgba(2,132,199,.28); }
+    .repeat { background: #334155; font-size: 16px; }
+    .action-btn:hover { filter: brightness(1.10); transform: translateY(-1px); }
+    .action-btn:active { transform: translateY(1px); }
+    .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .info-box { border: 1px solid var(--line); border-radius: 11px; padding: 11px; background: #0b1220; text-align: center; }
+    .info-box span { display: block; color: var(--muted); font-size: 11px; }
+    .info-box strong { display: block; margin-top: 3px; font-size: 15px; }
+    .side-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 13px; }
+    .side-title h2 { margin: 0; font-size: 18px; }
+    .history { display: flex; flex-direction: column; gap: 9px; max-height: 500px; overflow: auto; }
+    .history-item { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 11px; padding: 10px 12px; background: #0b1220; }
+    .history-number { color: #7dd3fc; font-size: 24px; font-weight: 900; min-width: 58px; }
+    .history-meta { flex: 1; color: #cbd5e1; font-size: 13px; }
+    .history-meta small { display: block; color: var(--muted); margin-top: 3px; }
+    .empty { padding: 25px 8px; text-align: center; color: #64748b; }
+    .note { margin-top: 14px; border-left: 3px solid var(--warning); padding: 10px 12px; color: #cbd5e1; background: rgba(245,158,11,.08); font-size: 12px; line-height: 1.55; }
+    dialog { width: min(430px, calc(100% - 28px)); border: 1px solid #475569; border-radius: 16px; padding: 0; color: #f8fafc; background: #0f172a; }
+    dialog::backdrop { background: rgba(2,6,23,.78); backdrop-filter: blur(3px); }
+    .modal { padding: 22px; }
+    .modal h3 { margin: 0 0 7px; color: var(--primary2); }
+    .modal p { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .field { margin-top: 12px; }
+    .field label { display: block; color: #cbd5e1; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .field input, .field select { width: 100%; border: 1px solid #475569; border-radius: 9px; padding: 11px 12px; background: #020617; color: #fff; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+    .modal-btn { border: 0; border-radius: 9px; padding: 10px 15px; color: #fff; background: #334155; cursor: pointer; font-weight: 750; }
+    .modal-btn.primary { background: var(--primary); }
+    .error { min-height: 18px; margin-top: 10px; color: #fca5a5; font-size: 12px; }
+    @media (max-width: 780px) {
+      .app { padding: 12px; }
+      header { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .grid { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr; }
+      .number { font-size: clamp(84px, 29vw, 145px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>🔊 Hệ thống gọi số khám bệnh</h1>
+        <p>Tiếp nhận – đo sinh hiệu · Hoạt động trực tiếp trên trình duyệt</p>
+      </div>
+      <div class="top-actions">
+        <a class="back-link" href="index.html">← Công cụ</a>
+        <button class="small-btn" id="voiceBtn">🎙️ Giọng đọc</button>
+        <button class="small-btn" id="pinBtn">🔐 Đổi PIN</button>
+        <button class="small-btn" id="fullscreenBtn">⛶ Toàn màn hình</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="counter-select">
+          <label for="counter">Quầy gọi:</label>
+          <select id="counter">
+            <option value="1">Quầy số 1</option>
+            <option value="2">Quầy số 2</option>
+            <option value="3">Quầy số 3</option>
+          </select>
+        </div>
+
+        <div class="number-card" aria-live="polite">
+          <div class="number-label">SỐ ĐANG GỌI</div>
+          <div class="number" id="currentNumber">000</div>
+          <div class="desk" id="currentDesk">QUẦY SỐ 1</div>
+        </div>
+        <div class="status" id="status">Sẵn sàng gọi số</div>
+
+        <div class="actions">
+          <button class="action-btn next" id="nextBtn">GỌI SỐ TIẾP THEO</button>
+          <button class="action-btn repeat" id="repeatBtn">↻ GỌI LẠI</button>
+        </div>
+
+        <div class="info-row">
+          <div class="info-box"><span>NGÀY LÀM VIỆC</span><strong id="workDate">--/--/----</strong></div>
+          <div class="info-box"><span>TRẠNG THÁI PIN</span><strong id="lockState">Đang khóa</strong></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="side-title">
+          <h2>Lịch sử gọi</h2>
+          <button class="small-btn" id="resetBtn">Đặt lại</button>
+        </div>
+        <div class="history" id="history"></div>
+        <div class="note">
+          Dữ liệu chỉ lưu trên trình duyệt của máy này. PIN ban đầu: <strong>829142</strong>.
+          Hãy đổi PIN trước khi sử dụng thực tế.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <dialog id="unlockDialog">
+    <form class="modal" method="dialog" id="unlockForm">
+      <h3>Mở khóa thao tác</h3>
+      <p>Nhập mã PIN để gọi hoặc đặt lại số. Sau khi mở khóa, PIN có hiệu lực đến khi đóng tab.</p>
+      <div class="field">
+        <label for="unlockPin">Mã PIN</label>
+        <input id="unlockPin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" required autocomplete="current-password">
+      </div>
+      <div class="error" id="unlockError"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" type="button" onclick="this.closest('dialog').close()">Hủy</button>
+        <button class="modal-btn primary" value="default" id="unlockSubmit">Mở khóa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="pinDialog">
+    <form class="modal" method="dialog" id="pinForm">
+      <h3>Đổi mã PIN</h3>
+      <p>PIN gồm 4–12 chữ số và được lưu riêng trên trình duyệt này.</p>
+      <div class="field"><label for="oldPin">PIN hiện tại</label><input id="oldPin" type="password" inputmode="numeric" maxlength="12" required></div>
+      <div class="field"><label for="newPin">PIN mới</label><input id="newPin" type="password" inputmode="numeric" pattern="[0-9]{4,12}" maxlength="12" required></div>
+      <div class="field"><label for="confirmPin">Nhập lại PIN mới</label><input id="confirmPin" type="password" inputmode="numeric" maxlength="12" required></div>
+      <div class="error" id="pinError"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" type="button" onclick="this.closest('dialog').close()">Hủy</button>
+        <button class="modal-btn primary" value="default" id="pinSubmit">Lưu PIN</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="voiceDialog">
+    <form class="modal" method="dialog" id="voiceForm">
+      <h3>Cài đặt giọng đọc</h3>
+      <p>Ưu tiên chọn giọng có ngôn ngữ “vi-VN”. Nếu máy chưa có, hãy cài giọng tiếng Việt trong Windows/Android.</p>
+      <div class="field"><label for="voiceSelect">Giọng nói</label><select id="voiceSelect"></select></div>
+      <div class="field"><label for="rate">Tốc độ đọc: <span id="rateValue">0.85</span></label><input id="rate" type="range" min="0.6" max="1.2" value="0.85" step="0.05"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" type="button" onclick="this.closest('dialog').close()">Đóng</button>
+        <button class="modal-btn primary" value="default" id="testVoiceBtn">Nghe thử</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const KEYS = {
+      state: 'bap_queue_state_v1', pin: 'bap_queue_pin_v1',
+      counter: 'bap_queue_counter_v1', voice: 'bap_queue_voice_v1', rate: 'bap_queue_rate_v1'
+    };
+    const DEFAULT_PIN_HASH = '8949ac83318437773bb6c38390a0ce6e05a60b4a3889004d62f34045d2ef6425';
+    const $ = id => document.getElementById(id);
+    let unlocked = sessionStorage.getItem('bap_queue_unlocked') === '1';
+    let pendingAction = null;
+    let voices = [];
+
+    function todayKey() {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    }
+    function newState() { return { date: todayKey(), current: 0, lastCounter: 1, history: [] }; }
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEYS.state));
+        if (!saved || saved.date !== todayKey()) return newState();
+        return { ...newState(), ...saved, history: Array.isArray(saved.history) ? saved.history.slice(0, 30) : [] };
+      } catch (_) { return newState(); }
+    }
+    let state = loadState();
+    function saveState() { localStorage.setItem(KEYS.state, JSON.stringify(state)); }
+    function pad(n) { return String(n || 0).padStart(3, '0'); }
+    function displayDate(key) { const [y,m,d] = key.split('-'); return `${d}/${m}/${y}`; }
+    function escapeHtml(v) { return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+    function render() {
+      $('currentNumber').textContent = pad(state.current);
+      $('currentDesk').textContent = `QUẦY SỐ ${state.lastCounter || $('counter').value}`;
+      $('workDate').textContent = displayDate(state.date);
+      $('lockState').textContent = unlocked ? 'Đã mở khóa' : 'Đang khóa';
+      $('lockState').style.color = unlocked ? '#86efac' : '#fbbf24';
+      $('history').innerHTML = state.history.length ? state.history.map(item => `
+        <div class="history-item">
+          <div class="history-number">${pad(item.number)}</div>
+          <div class="history-meta">Quầy số ${escapeHtml(item.counter)}<small>${escapeHtml(item.time)}</small></div>
+        </div>`).join('') : '<div class="empty">Chưa có lượt gọi nào hôm nay</div>';
+    }
+
+    async function sha256(text) {
+      const bytes = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    function storedPinHash() { return localStorage.getItem(KEYS.pin) || DEFAULT_PIN_HASH; }
+    async function pinIsValid(pin) { return (await sha256(pin)) === storedPinHash(); }
+
+    function requireUnlock(action) {
+      if (unlocked) return action();
+      pendingAction = action;
+      $('unlockError').textContent = '';
+      $('unlockPin').value = '';
+      $('unlockDialog').showModal();
+      setTimeout(() => $('unlockPin').focus(), 50);
+    }
+
+    function currentVoice() {
+      const chosen = localStorage.getItem(KEYS.voice);
+      return voices.find(v => v.name === chosen) || voices.find(v => /^vi(-|_)/i.test(v.lang)) || voices.find(v => /vietnam/i.test(v.name)) || null;
+    }
+    function speak(number, counter) {
+      if (!('speechSynthesis' in window)) {
+        $('status').textContent = 'Trình duyệt không hỗ trợ phát giọng nói.';
+        return;
+      }
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(`Mời số thứ tự ${number}. Xin mời số thứ tự ${number}, đến quầy số ${counter}.`);
+      utterance.lang = 'vi-VN';
+      utterance.rate = Number(localStorage.getItem(KEYS.rate) || 0.85);
+      utterance.pitch = 1;
+      const voice = currentVoice();
+      if (voice) utterance.voice = voice;
+      utterance.onstart = () => $('status').textContent = `Đang mời số ${pad(number)} đến quầy ${counter}`;
+      utterance.onend = () => $('status').textContent = `Đã gọi số ${pad(number)} · Quầy ${counter}`;
+      utterance.onerror = () => $('status').textContent = 'Không phát được âm thanh. Hãy kiểm tra loa và giọng tiếng Việt.';
+      speechSynthesis.speak(utterance);
+    }
+
+    function callNext() {
+      if (state.date !== todayKey()) state = newState();
+      state.current += 1;
+      const counter = Number($('counter').value);
+      state.lastCounter = counter;
+      state.history.unshift({ number: state.current, counter, time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) });
+      state.history = state.history.slice(0, 30);
+      saveState(); render(); speak(state.current, counter);
+    }
+    function repeatCall() {
+      if (!state.current) { $('status').textContent = 'Chưa có số nào để gọi lại.'; return; }
+      const counter = Number($('counter').value);
+      state.lastCounter = counter;
+      saveState(); render(); speak(state.current, counter);
+    }
+    function resetQueue() {
+      if (!confirm('Đặt số hiện tại về 000 và xóa lịch sử hôm nay?')) return;
+      state = newState(); state.lastCounter = Number($('counter').value);
+      saveState(); render(); $('status').textContent = 'Đã đặt lại số thứ tự.';
+    }
+
+    $('counter').value = localStorage.getItem(KEYS.counter) || '1';
+    if (!state.current) state.lastCounter = Number($('counter').value);
+    $('counter').addEventListener('change', e => { localStorage.setItem(KEYS.counter, e.target.value); if (!state.current) { state.lastCounter = Number(e.target.value); render(); } });
+    $('nextBtn').addEventListener('click', () => requireUnlock(callNext));
+    $('repeatBtn').addEventListener('click', () => requireUnlock(repeatCall));
+    $('resetBtn').addEventListener('click', () => requireUnlock(resetQueue));
+    $('fullscreenBtn').addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+
+    $('unlockForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!(await pinIsValid($('unlockPin').value))) { $('unlockError').textContent = 'Mã PIN không đúng.'; $('unlockPin').select(); return; }
+      unlocked = true;
+      sessionStorage.setItem('bap_queue_unlocked', '1');
+      $('unlockDialog').close(); render();
+      const action = pendingAction; pendingAction = null;
+      if (action) action();
+    });
+
+    $('pinBtn').addEventListener('click', () => {
+      $('pinForm').reset(); $('pinError').textContent = ''; $('pinDialog').showModal(); setTimeout(() => $('oldPin').focus(), 50);
+    });
+    $('pinForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const oldPin = $('oldPin').value, nextPin = $('newPin').value, confirmPin = $('confirmPin').value;
+      if (!(await pinIsValid(oldPin))) { $('pinError').textContent = 'PIN hiện tại không đúng.'; return; }
+      if (!/^\d{4,12}$/.test(nextPin)) { $('pinError').textContent = 'PIN mới phải gồm 4–12 chữ số.'; return; }
+      if (nextPin !== confirmPin) { $('pinError').textContent = 'Hai lần nhập PIN mới không khớp.'; return; }
+      localStorage.setItem(KEYS.pin, await sha256(nextPin));
+      unlocked = true; sessionStorage.setItem('bap_queue_unlocked', '1');
+      $('pinDialog').close(); render(); $('status').textContent = 'Đã đổi mã PIN thành công.';
+    });
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      const selected = localStorage.getItem(KEYS.voice);
+      $('voiceSelect').innerHTML = voices.length ? voices.map(v => `<option value="${escapeHtml(v.name)}" ${v.name === selected ? 'selected' : ''}>${escapeHtml(v.name)} — ${escapeHtml(v.lang)}</option>`).join('') : '<option>Đang tải danh sách giọng nói…</option>';
+      if (!selected) { const vi = voices.find(v => /^vi(-|_)/i.test(v.lang)); if (vi) $('voiceSelect').value = vi.name; }
+    }
+    if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+    $('voiceBtn').addEventListener('click', () => {
+      $('rate').value = localStorage.getItem(KEYS.rate) || '0.85'; $('rateValue').textContent = $('rate').value; loadVoices(); $('voiceDialog').showModal();
+    });
+    $('voiceSelect').addEventListener('change', e => localStorage.setItem(KEYS.voice, e.target.value));
+    $('rate').addEventListener('input', e => { $('rateValue').textContent = e.target.value; localStorage.setItem(KEYS.rate, e.target.value); });
+    $('voiceForm').addEventListener('submit', e => { e.preventDefault(); localStorage.setItem(KEYS.voice, $('voiceSelect').value); speak(1, Number($('counter').value)); });
+
+    window.addEventListener('storage', e => { if (e.key === KEYS.state) { state = loadState(); render(); } });
+    saveState(); render();
+  </script>
+</body>
+</html>
