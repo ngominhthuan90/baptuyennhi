@@ -3,260 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hệ Thống Tiếp Nhận & Quét CCCD</title>
+  <title>Tiếp nhận & Quét CCCD</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    :root {
-      --autumn-primary: #9c4221;       /* Terracotta ấm áp */
-      --autumn-primary-hover: #7c3114;
-      --autumn-secondary: #c86d3b;     /* Cam cháy / Quế */
-      --autumn-accent: #d97706;        /* Hổ phách / Lá phong */
-      --autumn-bg: #fbf8f5;            /* Nền be kem dịu mắt */
-      --autumn-card-bg: #ffffff;
-      --autumn-border: #ebdcd0;
-      --autumn-text-main: #3d2314;     /* Nâu hạt dẻ đậm */
-      --autumn-text-muted: #7c685b;
-      --autumn-scanner-bg: #fef7ee;
-      --autumn-scanner-border: #f3c292;
-    }
-
-    body {
-      background-color: var(--autumn-bg);
-      color: var(--autumn-text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      padding: 24px 10px;
-      min-height: 100vh;
-    }
-
-    .card-main {
-      max-width: 680px;
-      margin: 0 auto;
-      border-radius: 18px;
-      border: 1px solid var(--autumn-border);
-      box-shadow: 0 12px 36px rgba(156, 66, 33, 0.08);
-      background: var(--autumn-card-bg);
-      overflow: hidden;
-    }
-
-    .card-header-autumn {
-      background: linear-gradient(135deg, #8a3517 0%, #b85427 50%, #d47036 100%);
-      color: #ffffff;
-      padding: 24px 20px;
-      text-align: center;
-      position: relative;
-    }
-
-    .card-header-autumn h5 {
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-
-    .card-header-autumn .subtitle {
-      font-size: 0.85rem;
-      opacity: 0.9;
-      font-weight: 300;
-    }
-
-    .btn-back-menu {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      color: #ffffff;
-      backdrop-filter: blur(4px);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      padding: 6px 14px;
-      transition: all 0.2s ease;
-      text-decoration: none;
-    }
-
-    .btn-back-menu:hover {
-      background: rgba(255, 255, 255, 0.35);
-      color: #ffffff;
-    }
-
-    .scanner-box {
-      background: var(--autumn-scanner-bg);
-      border: 2px dashed var(--autumn-scanner-border);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 18px;
-    }
-
-    .scanner-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--autumn-primary);
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-    }
-
-    .scanner-input {
-      background: #ffffff;
-      border: 1px solid #e2cbba;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: var(--autumn-text-main);
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .scanner-input:focus {
-      border-color: var(--autumn-secondary);
-      box-shadow: 0 0 0 3px rgba(200, 109, 59, 0.18);
-      outline: none;
-    }
-
-    .btn-camera-autumn {
-      background: #fff;
-      color: var(--autumn-primary);
-      border: 1.5px solid var(--autumn-secondary);
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .btn-camera-autumn:hover {
-      background: #fbf0e8;
-      color: var(--autumn-primary-hover);
-      border-color: var(--autumn-primary);
-    }
-
-    .section-label {
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: var(--autumn-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin: 22px 0 12px 0;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #f3e5da;
-      display: flex;
-      align-items: center;
-    }
-
-    .form-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--autumn-text-main);
-      margin-bottom: 5px;
-    }
-
-    .form-control, .form-select {
-      border: 1px solid #ded0c5;
-      border-radius: 9px;
-      padding: 9px 12px;
-      font-size: 0.92rem;
-      color: var(--autumn-text-main);
-      background-color: #fff;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: var(--autumn-secondary);
-      box-shadow: 0 0 0 3px rgba(200, 109, 59, 0.18);
-    }
-
-    .char-count {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #a89485;
-    }
-
-    .char-count.valid {
-      color: #2e7d32;
-    }
-
-    .bg-autumn-readonly {
-      background-color: #f6f0ea !important;
-      color: #5c4333;
-      font-weight: 600;
-    }
-
-    .btn-submit-autumn {
-      background: linear-gradient(135deg, #9c4221 0%, #c86d3b 100%);
-      border: none;
-      color: #ffffff;
-      border-radius: 12px;
-      padding: 14px;
-      font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: 0.5px;
-      box-shadow: 0 6px 18px rgba(156, 66, 33, 0.25);
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-
-    .btn-submit-autumn:hover {
-      background: linear-gradient(135deg, #873617 0%, #b35a29 100%);
-      box-shadow: 0 8px 22px rgba(156, 66, 33, 0.35);
-      transform: translateY(-1px);
-      color: #ffffff;
-    }
-
-    .btn-submit-autumn:disabled {
-      background: #c7b3a5;
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    #cameraView {
-      display: none;
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      border: 2px solid var(--autumn-secondary);
-    }
+    body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; padding: 15px 5px; }
+    .card-main { max-width: 650px; margin: 0 auto; border-radius: 14px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: #fff; }
+    .card-header-custom { background: linear-gradient(135deg, #0d6efd, #0b5ed7); color: white; padding: 18px; border-radius: 14px 14px 0 0; text-align: center; }
+    .scanner-box { background: #fff3cd; border: 2px dashed #ffc107; border-radius: 8px; padding: 10px; margin-bottom: 16px; }
+    .section-label { font-size: 13px; font-weight: 700; color: #0d6efd; text-transform: uppercase; margin: 15px 0 8px 0; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+    #cameraView { display: none; width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+    .char-count { font-size: 12px; font-weight: 600; color: #6c757d; }
+    .char-count.valid { color: #198754; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <div class="card card-main">
-    <div class="card-header-autumn">
-      <a href="javascript:void(0)" onclick="window.location.href='index.html'" class="btn-back-menu position-absolute start-0 top-50 translate-middle-y ms-3">
-        <i class="fa-solid fa-arrow-left me-1"></i> Trang Chủ
+    <div class="card-header-custom position-relative">
+      <a href="index.html" class="btn btn-sm btn-light position-absolute start-0 top-50 translate-middle-y ms-3">
+        <i class="fa-solid fa-arrow-left"></i> Về Menu
       </a>
-      <h5><i class="fa-solid fa-hospital-user me-2"></i>TIẾP NHẬN & QUÉT CCCD</h5>
-      <div class="subtitle">Đồng bộ tự động dữ liệu khám sức khỏe Google Sheets</div>
+      <h5 class="mb-0 fw-bold"><i class="fa-solid fa-address-card me-2"></i>TIẾP NHẬN & QUÉT CCCD</h5>
     </div>
 
     <div class="card-body p-4">
       <!-- 1. Vùng nhận dữ liệu máy quét cầm tay -->
       <div class="scanner-box">
-        <div class="scanner-title">
-          <i class="fa-solid fa-barcode me-2"></i>Máy quét mã QR 2D cầm tay (USB / Bluetooth):
-        </div>
-        <textarea id="generalAddScanner" class="form-control scanner-input" rows="2" 
+        <label class="form-label fw-bold text-dark mb-1">
+          <i class="fa-solid fa-barcode me-1"></i>Máy quét mã QR cầm tay:
+        </label>
+        <textarea id="generalAddScanner" class="form-control" rows="2" 
                   autocomplete="off" autocapitalize="off" spellcheck="false" 
-                  placeholder="Đặt con trỏ vào đây rồi bấm cò quét mã QR trên thẻ CCCD..." 
+                  placeholder="Bấm vào đây rồi quét thẻ CCCD..." 
                   onkeydown="handleScannerKey(event)" 
                   oninput="handleScannerInput(this)"></textarea>
       </div>
 
       <!-- 2. Vùng quét bằng Camera điện thoại -->
-      <button type="button" class="btn btn-camera-autumn w-100 mb-3" onclick="toggleCamera()">
+      <button type="button" class="btn btn-outline-primary w-100 py-2 mb-3 fw-bold" onclick="toggleCamera()">
         <i class="fa-solid fa-camera me-2"></i><span id="btnCameraText">Bật Camera Quét Mã QR</span>
       </button>
       <div id="cameraView"></div>
 
       <form id="formHoSo" onsubmit="save(event)">
-        <div class="section-label">
-          <i class="fa-solid fa-id-card me-2"></i>1. Thông tin cá nhân & định danh
-        </div>
+        <div class="section-label">Thông tin cá nhân</div>
 
         <div class="row g-2">
           <div class="col-8">
-            <div class="d-flex justify-content-between align-items-center">
-              <label class="form-label">Số CCCD <span class="text-danger">*</span></label>
+            <div class="d-flex justify-content-between">
+              <label class="form-label small fw-bold">Số CCCD (bắt buộc 12 số) <span class="text-danger">*</span></label>
               <span id="cccdCount" class="char-count">0/12</span>
             </div>
             <input type="text" class="form-control" id="idNumber" required 
@@ -264,7 +64,7 @@
                    oninput="kiemTraCCCD(this)">
           </div>
           <div class="col-4">
-            <label class="form-label">Giới tính <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">Giới tính <span class="text-danger">*</span></label>
             <select class="form-select" id="gender" required>
               <option value="Nam">Nam</option>
               <option value="Nữ">Nữ</option>
@@ -274,68 +74,65 @@
 
         <div class="row g-2 mt-2">
           <div class="col-8">
-            <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">Họ và tên <span class="text-danger">*</span></label>
             <input type="text" class="form-control text-uppercase" id="fullName" required 
                    placeholder="NGUYỄN VĂN A" oninput="this.value = this.value.toUpperCase()">
           </div>
           <div class="col-4">
-            <label class="form-label">Số CMND cũ</label>
+            <label class="form-label small fw-bold">Số CMND cũ</label>
             <input type="text" class="form-control" id="oldId" maxlength="12" placeholder="9 hoặc 12 số">
           </div>
         </div>
 
         <div class="row g-2 mt-2">
           <div class="col-4">
-            <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
+            <label class="form-label small fw-bold">Ngày sinh (dd/mm/yyyy) <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="dateOfBirth" required 
                    placeholder="dd/mm/yyyy" maxlength="10" oninput="dinhDangNgay(this)" onblur="tinhTuoi()">
           </div>
           <div class="col-3">
-            <label class="form-label">Tuổi</label>
-            <input type="text" class="form-control bg-autumn-readonly" id="age" readonly placeholder="--">
+            <label class="form-label small fw-bold">Tuổi</label>
+            <input type="text" class="form-control bg-light" id="age" readonly>
           </div>
           <div class="col-5">
-            <label class="form-label">Nhóm tuổi</label>
-            <input type="text" class="form-control bg-autumn-readonly" id="ageGroup" readonly placeholder="Tự động tính">
+            <label class="form-label small fw-bold">Nhóm tuổi</label>
+            <input type="text" class="form-control bg-light" id="ageGroup" readonly>
           </div>
         </div>
 
         <div class="mt-2">
-          <label class="form-label">Địa chỉ thường trú</label>
-          <textarea class="form-control" id="address" rows="2" placeholder="Khu phố, xã/phường, tỉnh/thành..."></textarea>
+          <label class="form-label small fw-bold">Địa chỉ thường trú</label>
+          <textarea class="form-control" id="address" rows="2" placeholder="Số nhà, khu phố, xã/phường..."></textarea>
         </div>
 
         <div class="row g-2 mt-2">
           <div class="col-6">
-            <label class="form-label">Số điện thoại liên hệ</label>
+            <label class="form-label small fw-bold">Số điện thoại</label>
             <input type="tel" class="form-control" id="phone" maxlength="10" 
-                   placeholder="10 chữ số (bắt đầu 0...)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                   placeholder="10 số (bắt đầu 0...)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
           </div>
           <div class="col-6">
-            <label class="form-label">Ngày cấp CCCD</label>
+            <label class="form-label small fw-bold">Ngày cấp CCCD</label>
             <input type="text" class="form-control" id="issueDate" maxlength="10" 
                    placeholder="dd/mm/yyyy" oninput="dinhDangNgay(this)">
           </div>
         </div>
 
-        <div class="section-label">
-          <i class="fa-solid fa-building-wheat me-2"></i>2. Đơn vị & Điểm tiếp nhận
-        </div>
-        
+        <div class="section-label">Đơn vị tiếp nhận</div>
         <div class="mb-2">
-          <label class="form-label">Đơn vị / Trạm y tế / Trường học <span class="text-danger">*</span></label>
+          <label class="form-label small fw-bold">Đơn vị / Trường học <span class="text-danger">*</span></label>
           <select class="form-select" id="department" required onchange="thayDoiDonVi(this)">
             <option value="">-- Đang đồng bộ từ Google Sheets... --</option>
           </select>
         </div>
 
         <div class="mb-3 d-none" id="customDeptBox">
-          <label class="form-label text-primary">Nhập tên đơn vị mới:</label>
-          <input type="text" class="form-control" id="customDepartment" placeholder="Gõ tên trạm / trường học / cơ quan...">
+          <label class="form-label small fw-bold text-primary">Nhập tên đơn vị mới:</label>
+          <input type="text" class="form-control" id="customDepartment" placeholder="Nhập tên trường / cơ quan...">
         </div>
 
-        <button type="submit" id="btnSubmit" class="btn btn-submit-autumn w-100 mt-4">
-          <i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN TIẾP NHẬN
+        <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold mt-3">
+          <i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN
         </button>
       </form>
     </div>
@@ -343,21 +140,18 @@
 </div>
 
 <script>
-  // Link Web App Google Apps Script
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec";
   let html5Scanner;
   let isScanning = false;
 
   window.onload = function() {
-    let scannerInput = document.getElementById('generalAddScanner');
-    if (scannerInput) scannerInput.focus();
+    document.getElementById('generalAddScanner').focus();
   };
 
-  // 1. Nhận danh mục tự động từ Google Sheets (JSONP)
+  // HÀM NHẬN DANH MỤC TỪ GOOGLE SHEETS QUA CHUẨN JSONP
   function loadDanhMuc(danhMuc) {
     let sel = document.getElementById('department');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">-- Chọn đơn vị tiếp nhận --</option>';
+    sel.innerHTML = '<option value="">-- Chọn đơn vị --</option>';
     
     if (Array.isArray(danhMuc) && danhMuc.length > 0) {
       danhMuc.forEach(item => {
@@ -368,25 +162,21 @@
       });
     }
     
-    // Tùy chọn nhập tay linh hoạt
+    // Thêm tùy chọn Khác
     let optKhac = document.createElement('option');
     optKhac.value = 'KHAC';
     optKhac.textContent = '-- Khác (Tự nhập tên đơn vị mới) --';
     sel.appendChild(optKhac);
   }
 
-  // 2. Ràng buộc CCCD: Chỉ cho nhập số, giới hạn 12 số và đếm ký tự
   function kiemTraCCCD(elem) {
     elem.value = elem.value.replace(/[^0-9]/g, '');
     let len = elem.value.length;
     let countElem = document.getElementById('cccdCount');
-    if (countElem) {
-      countElem.textContent = len + '/12';
-      countElem.className = (len === 12) ? 'char-count valid' : 'char-count';
-    }
+    countElem.textContent = len + '/12';
+    countElem.className = (len === 12) ? 'char-count valid' : 'char-count';
   }
 
-  // 3. Tự chèn dấu gạch chéo dd/mm/yyyy khi nhập ngày
   function dinhDangNgay(elem) {
     let v = elem.value.replace(/[^0-9]/g, '');
     if (v.length > 2 && v.length <= 4) {
@@ -396,11 +186,9 @@
     }
   }
 
-  // 4. Mở ô nhập tự do khi chọn 'Khác'
   function thayDoiDonVi(sel) {
     let box = document.getElementById('customDeptBox');
     let customInput = document.getElementById('customDepartment');
-    if (!box || !customInput) return;
     if (sel.value === 'KHAC') {
       box.classList.remove('d-none');
       customInput.required = true;
@@ -412,7 +200,6 @@
     }
   }
 
-  // 5. Bắt sự kiện máy quét mã vạch cầm tay
   function handleScannerKey(e) {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
@@ -429,7 +216,6 @@
     }
   }
 
-  // 6. Quét QR bằng Camera điện thoại
   function toggleCamera() {
     let box = document.getElementById('cameraView');
     let btnText = document.getElementById('btnCameraText');
@@ -455,17 +241,11 @@
     }
   }
 
-  // 7. Bóc tách dữ liệu chuỗi QR CCCD chuẩn Bộ Công an
   function parseQR(raw) {
     if (!raw) return;
     let parts = raw.split('|');
     if (parts.length < 5) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Mã QR không đúng chuẩn',
-        text: 'Vui lòng kiểm tra lại thẻ Căn cước công dân.',
-        confirmButtonColor: '#9c4221'
-      });
+      Swal.fire('Lỗi định dạng', 'Mã QR không đúng chuẩn Căn cước công dân', 'warning');
       return;
     }
 
@@ -490,15 +270,9 @@
     }
 
     tinhTuoi();
-    Swal.fire({
-      icon: 'success',
-      title: 'Đã quét CCCD thành công!',
-      timer: 1200,
-      showConfirmButton: false
-    });
+    Swal.fire({ icon: 'success', title: 'Đã quét CCCD thành công!', timer: 1200, showConfirmButton: false });
   }
 
-  // 8. Tự động tính tuổi & phân loại nhóm tuổi
   function tinhTuoi() {
     let dob = document.getElementById('dateOfBirth').value.trim();
     let parts = dob.split('/');
@@ -519,30 +293,19 @@
     }
   }
 
-  // 9. Lưu dữ liệu về Google Sheets
   function save(e) {
     e.preventDefault();
 
     let cccdVal = document.getElementById('idNumber').value.trim();
     if (cccdVal.length !== 12) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Lỗi định dạng',
-        text: 'Số Căn cước công dân bắt buộc phải gồm đúng 12 chữ số!',
-        confirmButtonColor: '#9c4221'
-      });
+      Swal.fire('Lỗi định dạng', 'Số Căn cước công dân bắt buộc phải gồm đúng 12 chữ số!', 'error');
       document.getElementById('idNumber').focus();
       return;
     }
 
     let phoneVal = document.getElementById('phone').value.trim();
     if (phoneVal && (phoneVal.length !== 10 || !phoneVal.startsWith('0'))) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Số điện thoại chưa đúng',
-        text: 'Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0!',
-        confirmButtonColor: '#9c4221'
-      });
+      Swal.fire('Lỗi số điện thoại', 'Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0!', 'warning');
       document.getElementById('phone').focus();
       return;
     }
@@ -551,12 +314,7 @@
     if (donViVal === 'KHAC') {
       donViVal = document.getElementById('customDepartment').value.trim();
       if (!donViVal) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Thiếu thông tin',
-          text: 'Vui lòng nhập tên đơn vị mới!',
-          confirmButtonColor: '#9c4221'
-        });
+        Swal.fire('Thiếu thông tin', 'Vui lòng nhập tên đơn vị mới!', 'warning');
         document.getElementById('customDepartment').focus();
         return;
       }
@@ -564,7 +322,7 @@
 
     let btn = document.getElementById('btnSubmit');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu hồ sơ...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu vào Sheets...';
 
     let data = {
       cccd: cccdVal,
@@ -587,47 +345,27 @@
     .then(res => res.json())
     .then(res => {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN TIẾP NHẬN';
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN';
       if (res.status === 'success') {
-        Swal.fire({
-          icon: 'success',
-          title: 'Thành công!',
-          text: res.message,
-          confirmButtonColor: '#9c4221'
-        });
+        Swal.fire('Thành công', res.message, 'success');
         document.getElementById('formHoSo').reset();
-        let countElem = document.getElementById('cccdCount');
-        if (countElem) {
-          countElem.textContent = '0/12';
-          countElem.className = 'char-count';
-        }
-        let customBox = document.getElementById('customDeptBox');
-        if (customBox) customBox.classList.add('d-none');
-        let scanner = document.getElementById('generalAddScanner');
-        if (scanner) scanner.focus();
+        document.getElementById('cccdCount').textContent = '0/12';
+        document.getElementById('cccdCount').className = 'char-count';
+        document.getElementById('customDeptBox').classList.add('d-none');
+        document.getElementById('generalAddScanner').focus();
       } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Lỗi',
-          text: res.message,
-          confirmButtonColor: '#9c4221'
-        });
+        Swal.fire('Lỗi', res.message, 'error');
       }
     })
     .catch(err => {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN TIẾP NHẬN';
-      Swal.fire({
-        icon: 'error',
-        title: 'Lỗi kết nối',
-        text: 'Không thể gửi dữ liệu: ' + err,
-        confirmButtonColor: '#9c4221'
-      });
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN';
+      Swal.fire('Lỗi kết nối', 'Không thể gửi dữ liệu: ' + err, 'error');
     });
   }
 </script>
 
-<!-- TỰ ĐỘNG HÚT DANH MỤC TỪ GOOGLE SHEETS QUA JSONP -->
+<!-- KẾT NỐI TỰ ĐỘNG ĐỌC GOOGLE SHEETS QUA JSONP KHÔNG BỊ CHẶN CORS -->
 <script src="https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec?callback=loadDanhMuc"></script>
 </body>
 </html>
