@@ -122,20 +122,10 @@
         <div class="mb-2">
           <label class="form-label small fw-bold">Đơn vị / Trường học <span class="text-danger">*</span></label>
           <select class="form-select" id="department" required onchange="thayDoiDonVi(this)">
-            <option value="">-- Chọn đơn vị --</option>
-            <option value="Trường Đại học Thủ Dầu Một">Trường Đại học Thủ Dầu Một</option>
-            <option value="Trường Đại học Bình Dương">Trường Đại học Bình Dương</option>
-            <option value="Trường Cao đẳng Việt Nam - Hàn Quốc">Trường Cao đẳng Việt Nam - Hàn Quốc</option>
-            <option value="Trường Cao đẳng Y tế Bình Dương">Trường Cao đẳng Y tế Bình Dương</option>
-            <option value="TTGDTX Quản trị công nghệ">TTGDTX Quản trị công nghệ</option>
-            <option value="UBND Phường Phú Lợi">UBND Phường Phú Lợi</option>
-            <option value="UBND Phường Phú An">UBND Phường Phú An</option>
-            <option value="UBND Phường Hiệp An">UBND Phường Hiệp An</option>
-            <option value="KHAC">-- Khác (Tự nhập tên đơn vị mới) --</option>
+            <option value="">-- Đang đồng bộ từ Google Sheets... --</option>
           </select>
         </div>
 
-        <!-- Ô nhập đơn vị tùy chỉnh nếu chọn Khác -->
         <div class="mb-3 d-none" id="customDeptBox">
           <label class="form-label small fw-bold text-primary">Nhập tên đơn vị mới:</label>
           <input type="text" class="form-control" id="customDepartment" placeholder="Nhập tên trường / cơ quan...">
@@ -150,51 +140,43 @@
 </div>
 
 <script>
-  // DÁN LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO GIỮA 2 DẤU NGOẶC KÉP NÀY:
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec";
-
   let html5Scanner;
   let isScanning = false;
 
   window.onload = function() {
     document.getElementById('generalAddScanner').focus();
-    // Đồng bộ danh mục từ Sheets (nếu có thì thêm vào danh sách mẫu)
-    if (SCRIPT_URL && SCRIPT_URL.startsWith('http')) {
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(list => {
-          if (Array.isArray(list) && list.length > 0) {
-            let sel = document.getElementById('department');
-            // Thêm các đơn vị từ Google Sheets vào menu
-            list.forEach(item => {
-              let exists = Array.from(sel.options).some(opt => opt.value === item);
-              if (!exists) {
-                let opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                sel.insertBefore(opt, sel.lastElementChild);
-              }
-            });
-          }
-        })
-        .catch(err => console.log('Sử dụng danh mục mặc định:', err));
-    }
   };
 
-  // 1. Ràng buộc CCCD: chỉ cho nhập số và kiểm tra đúng 12 số
+  // HÀM NHẬN DANH MỤC TỪ GOOGLE SHEETS QUA CHUẨN JSONP
+  function loadDanhMuc(danhMuc) {
+    let sel = document.getElementById('department');
+    sel.innerHTML = '<option value="">-- Chọn đơn vị --</option>';
+    
+    if (Array.isArray(danhMuc) && danhMuc.length > 0) {
+      danhMuc.forEach(item => {
+        let opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        sel.appendChild(opt);
+      });
+    }
+    
+    // Thêm tùy chọn Khác
+    let optKhac = document.createElement('option');
+    optKhac.value = 'KHAC';
+    optKhac.textContent = '-- Khác (Tự nhập tên đơn vị mới) --';
+    sel.appendChild(optKhac);
+  }
+
   function kiemTraCCCD(elem) {
     elem.value = elem.value.replace(/[^0-9]/g, '');
     let len = elem.value.length;
     let countElem = document.getElementById('cccdCount');
     countElem.textContent = len + '/12';
-    if (len === 12) {
-      countElem.className = 'char-count valid';
-    } else {
-      countElem.className = 'char-count';
-    }
+    countElem.className = (len === 12) ? 'char-count valid' : 'char-count';
   }
 
-  // 2. Tự chèn dấu gạch chéo dd/mm/yyyy khi gõ ngày sinh
   function dinhDangNgay(elem) {
     let v = elem.value.replace(/[^0-9]/g, '');
     if (v.length > 2 && v.length <= 4) {
@@ -204,7 +186,6 @@
     }
   }
 
-  // 3. Tự động chuyển đổi nếu người dùng chọn "Khác"
   function thayDoiDonVi(sel) {
     let box = document.getElementById('customDeptBox');
     let customInput = document.getElementById('customDepartment');
@@ -219,7 +200,6 @@
     }
   }
 
-  // 4. Bắt sự kiện máy quét mã vạch cầm tay
   function handleScannerKey(e) {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
@@ -236,7 +216,6 @@
     }
   }
 
-  // 5. Bật/Tắt Camera quét mã QR
   function toggleCamera() {
     let box = document.getElementById('cameraView');
     let btnText = document.getElementById('btnCameraText');
@@ -262,7 +241,6 @@
     }
   }
 
-  // 6. Bóc tách dữ liệu chuỗi QR CCCD
   function parseQR(raw) {
     if (!raw) return;
     let parts = raw.split('|');
@@ -295,7 +273,6 @@
     Swal.fire({ icon: 'success', title: 'Đã quét CCCD thành công!', timer: 1200, showConfirmButton: false });
   }
 
-  // 7. Tính tuổi và nhóm tuổi
   function tinhTuoi() {
     let dob = document.getElementById('dateOfBirth').value.trim();
     let parts = dob.split('/');
@@ -316,7 +293,6 @@
     }
   }
 
-  // 8. Lưu dữ liệu với kiểm tra ràng buộc chặt chẽ
   function save(e) {
     e.preventDefault();
 
@@ -388,5 +364,8 @@
     });
   }
 </script>
+
+<!-- KẾT NỐI TỰ ĐỘNG ĐỌC GOOGLE SHEETS QUA JSONP KHÔNG BỊ CHẶN CORS -->
+<script src="https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec?callback=loadDanhMuc"></script>
 </body>
 </html>
