@@ -16,6 +16,8 @@
     .scanner-box { background: #fff3cd; border: 2px dashed #ffc107; border-radius: 8px; padding: 10px; margin-bottom: 16px; }
     .section-label { font-size: 13px; font-weight: 700; color: #0d6efd; text-transform: uppercase; margin: 15px 0 8px 0; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
     #cameraView { display: none; width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+    .char-count { font-size: 12px; font-weight: 600; color: #6c757d; }
+    .char-count.valid { color: #198754; }
   </style>
 </head>
 <body>
@@ -53,12 +55,17 @@
 
         <div class="row g-2">
           <div class="col-8">
-            <label class="form-label small fw-bold">Số CCCD</label>
-            <input type="text" class="form-control" id="idNumber" required placeholder="12 số CCCD">
+            <div class="d-flex justify-content-between">
+              <label class="form-label small fw-bold">Số CCCD (bắt buộc 12 số) <span class="text-danger">*</span></label>
+              <span id="cccdCount" class="char-count">0/12</span>
+            </div>
+            <input type="text" class="form-control" id="idNumber" required 
+                   maxlength="12" placeholder="Nhập đúng 12 chữ số" 
+                   oninput="kiemTraCCCD(this)">
           </div>
           <div class="col-4">
-            <label class="form-label small fw-bold">Giới tính</label>
-            <select class="form-select" id="gender">
+            <label class="form-label small fw-bold">Giới tính <span class="text-danger">*</span></label>
+            <select class="form-select" id="gender" required>
               <option value="Nam">Nam</option>
               <option value="Nữ">Nữ</option>
             </select>
@@ -67,19 +74,21 @@
 
         <div class="row g-2 mt-2">
           <div class="col-8">
-            <label class="form-label small fw-bold">Họ và tên</label>
-            <input type="text" class="form-control text-uppercase" id="fullName" required>
+            <label class="form-label small fw-bold">Họ và tên <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase" id="fullName" required 
+                   placeholder="NGUYỄN VĂN A" oninput="this.value = this.value.toUpperCase()">
           </div>
           <div class="col-4">
             <label class="form-label small fw-bold">Số CMND cũ</label>
-            <input type="text" class="form-control" id="oldId">
+            <input type="text" class="form-control" id="oldId" maxlength="12" placeholder="9 hoặc 12 số">
           </div>
         </div>
 
         <div class="row g-2 mt-2">
           <div class="col-4">
-            <label class="form-label small fw-bold">Ngày sinh</label>
-            <input type="text" class="form-control" id="dateOfBirth" placeholder="dd/mm/yyyy" onblur="tinhTuoi()">
+            <label class="form-label small fw-bold">Ngày sinh (dd/mm/yyyy) <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dateOfBirth" required 
+                   placeholder="dd/mm/yyyy" maxlength="10" oninput="dinhDangNgay(this)" onblur="tinhTuoi()">
           </div>
           <div class="col-3">
             <label class="form-label small fw-bold">Tuổi</label>
@@ -93,29 +102,46 @@
 
         <div class="mt-2">
           <label class="form-label small fw-bold">Địa chỉ thường trú</label>
-          <textarea class="form-control" id="address" rows="2"></textarea>
+          <textarea class="form-control" id="address" rows="2" placeholder="Số nhà, khu phố, xã/phường..."></textarea>
         </div>
 
         <div class="row g-2 mt-2">
           <div class="col-6">
             <label class="form-label small fw-bold">Số điện thoại</label>
-            <input type="tel" class="form-control" id="phone" placeholder="09xxxxxxx">
+            <input type="tel" class="form-control" id="phone" maxlength="10" 
+                   placeholder="10 số (bắt đầu 0...)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
           </div>
           <div class="col-6">
             <label class="form-label small fw-bold">Ngày cấp CCCD</label>
-            <input type="text" class="form-control" id="issueDate" placeholder="dd/mm/yyyy">
+            <input type="text" class="form-control" id="issueDate" maxlength="10" 
+                   placeholder="dd/mm/yyyy" oninput="dinhDangNgay(this)">
           </div>
         </div>
 
         <div class="section-label">Đơn vị tiếp nhận</div>
-        <div class="mb-3">
-          <label class="form-label small fw-bold">Đơn vị / Trường học</label>
-          <select class="form-select" id="department" required>
-            <option value="">-- Đang nạp danh mục... --</option>
+        <div class="mb-2">
+          <label class="form-label small fw-bold">Đơn vị / Trường học <span class="text-danger">*</span></label>
+          <select class="form-select" id="department" required onchange="thayDoiDonVi(this)">
+            <option value="">-- Chọn đơn vị --</option>
+            <option value="Trường Đại học Thủ Dầu Một">Trường Đại học Thủ Dầu Một</option>
+            <option value="Trường Đại học Bình Dương">Trường Đại học Bình Dương</option>
+            <option value="Trường Cao đẳng Việt Nam - Hàn Quốc">Trường Cao đẳng Việt Nam - Hàn Quốc</option>
+            <option value="Trường Cao đẳng Y tế Bình Dương">Trường Cao đẳng Y tế Bình Dương</option>
+            <option value="TTGDTX Quản trị công nghệ">TTGDTX Quản trị công nghệ</option>
+            <option value="UBND Phường Phú Lợi">UBND Phường Phú Lợi</option>
+            <option value="UBND Phường Phú An">UBND Phường Phú An</option>
+            <option value="UBND Phường Hiệp An">UBND Phường Hiệp An</option>
+            <option value="KHAC">-- Khác (Tự nhập tên đơn vị mới) --</option>
           </select>
         </div>
 
-        <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold">
+        <!-- Ô nhập đơn vị tùy chỉnh nếu chọn Khác -->
+        <div class="mb-3 d-none" id="customDeptBox">
+          <label class="form-label small fw-bold text-primary">Nhập tên đơn vị mới:</label>
+          <input type="text" class="form-control" id="customDepartment" placeholder="Nhập tên trường / cơ quan...">
+        </div>
+
+        <button type="submit" id="btnSubmit" class="btn btn-primary w-100 py-3 fw-bold mt-3">
           <i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN
         </button>
       </form>
@@ -125,29 +151,75 @@
 
 <script>
   // DÁN LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO GIỮA 2 DẤU NGOẶC KÉP NÀY:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6ViYIxCgI8/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec";
 
   let html5Scanner;
   let isScanning = false;
 
   window.onload = function() {
     document.getElementById('generalAddScanner').focus();
-    // Nạp danh mục đơn vị từ Sheets
-    fetch(SCRIPT_URL)
-      .then(res => res.json())
-      .then(list => {
-        let sel = document.getElementById('department');
-        sel.innerHTML = '<option value="">-- Chọn đơn vị --</option>';
-        (list || []).forEach(item => {
-          let opt = document.createElement('option');
-          opt.value = item;
-          opt.textContent = item;
-          sel.appendChild(opt);
-        });
-      })
-      .catch(err => console.log('Chưa nạp được danh mục:', err));
+    // Đồng bộ danh mục từ Sheets (nếu có thì thêm vào danh sách mẫu)
+    if (SCRIPT_URL && SCRIPT_URL.startsWith('http')) {
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(list => {
+          if (Array.isArray(list) && list.length > 0) {
+            let sel = document.getElementById('department');
+            // Thêm các đơn vị từ Google Sheets vào menu
+            list.forEach(item => {
+              let exists = Array.from(sel.options).some(opt => opt.value === item);
+              if (!exists) {
+                let opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                sel.insertBefore(opt, sel.lastElementChild);
+              }
+            });
+          }
+        })
+        .catch(err => console.log('Sử dụng danh mục mặc định:', err));
+    }
   };
 
+  // 1. Ràng buộc CCCD: chỉ cho nhập số và kiểm tra đúng 12 số
+  function kiemTraCCCD(elem) {
+    elem.value = elem.value.replace(/[^0-9]/g, '');
+    let len = elem.value.length;
+    let countElem = document.getElementById('cccdCount');
+    countElem.textContent = len + '/12';
+    if (len === 12) {
+      countElem.className = 'char-count valid';
+    } else {
+      countElem.className = 'char-count';
+    }
+  }
+
+  // 2. Tự chèn dấu gạch chéo dd/mm/yyyy khi gõ ngày sinh
+  function dinhDangNgay(elem) {
+    let v = elem.value.replace(/[^0-9]/g, '');
+    if (v.length > 2 && v.length <= 4) {
+      elem.value = v.slice(0, 2) + '/' + v.slice(2);
+    } else if (v.length > 4) {
+      elem.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4, 8);
+    }
+  }
+
+  // 3. Tự động chuyển đổi nếu người dùng chọn "Khác"
+  function thayDoiDonVi(sel) {
+    let box = document.getElementById('customDeptBox');
+    let customInput = document.getElementById('customDepartment');
+    if (sel.value === 'KHAC') {
+      box.classList.remove('d-none');
+      customInput.required = true;
+      customInput.focus();
+    } else {
+      box.classList.add('d-none');
+      customInput.required = false;
+      customInput.value = '';
+    }
+  }
+
+  // 4. Bắt sự kiện máy quét mã vạch cầm tay
   function handleScannerKey(e) {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
@@ -164,6 +236,7 @@
     }
   }
 
+  // 5. Bật/Tắt Camera quét mã QR
   function toggleCamera() {
     let box = document.getElementById('cameraView');
     let btnText = document.getElementById('btnCameraText');
@@ -189,17 +262,21 @@
     }
   }
 
+  // 6. Bóc tách dữ liệu chuỗi QR CCCD
   function parseQR(raw) {
     if (!raw) return;
     let parts = raw.split('|');
     if (parts.length < 5) {
-      Swal.fire('Lỗi định dạng', 'Mã QR không đúng chuẩn CCCD', 'warning');
+      Swal.fire('Lỗi định dạng', 'Mã QR không đúng chuẩn Căn cước công dân', 'warning');
       return;
     }
 
-    document.getElementById('idNumber').value = parts[0] || '';
+    let cccdInput = document.getElementById('idNumber');
+    cccdInput.value = parts[0] || '';
+    kiemTraCCCD(cccdInput);
+
     document.getElementById('oldId').value = parts[1] || '';
-    document.getElementById('fullName').value = parts[2] || '';
+    document.getElementById('fullName').value = (parts[2] || '').toUpperCase();
     
     let dob = parts[3] || '';
     if (dob.length === 8) {
@@ -218,40 +295,70 @@
     Swal.fire({ icon: 'success', title: 'Đã quét CCCD thành công!', timer: 1200, showConfirmButton: false });
   }
 
+  // 7. Tính tuổi và nhóm tuổi
   function tinhTuoi() {
     let dob = document.getElementById('dateOfBirth').value.trim();
     let parts = dob.split('/');
     if (parts.length === 3) {
       let year = parseInt(parts[2], 10);
-      let age = new Date().getFullYear() - year;
-      document.getElementById('age').value = age;
-      if (age < 18) {
-        document.getElementById('ageGroup').value = 'Dưới 18 tuổi';
-      } else if (age < 60) {
-        document.getElementById('ageGroup').value = '18 đến dưới 60 tuổi';
-      } else {
-        document.getElementById('ageGroup').value = 'Từ 60 tuổi trở lên';
+      let currentYear = new Date().getFullYear();
+      let age = currentYear - year;
+      if (age >= 0 && age <= 130) {
+        document.getElementById('age').value = age;
+        if (age < 18) {
+          document.getElementById('ageGroup').value = 'Dưới 18 tuổi';
+        } else if (age < 60) {
+          document.getElementById('ageGroup').value = '18 đến dưới 60 tuổi';
+        } else {
+          document.getElementById('ageGroup').value = 'Từ 60 tuổi trở lên';
+        }
       }
     }
   }
 
+  // 8. Lưu dữ liệu với kiểm tra ràng buộc chặt chẽ
   function save(e) {
     e.preventDefault();
+
+    let cccdVal = document.getElementById('idNumber').value.trim();
+    if (cccdVal.length !== 12) {
+      Swal.fire('Lỗi định dạng', 'Số Căn cước công dân bắt buộc phải gồm đúng 12 chữ số!', 'error');
+      document.getElementById('idNumber').focus();
+      return;
+    }
+
+    let phoneVal = document.getElementById('phone').value.trim();
+    if (phoneVal && (phoneVal.length !== 10 || !phoneVal.startsWith('0'))) {
+      Swal.fire('Lỗi số điện thoại', 'Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0!', 'warning');
+      document.getElementById('phone').focus();
+      return;
+    }
+
+    let donViVal = document.getElementById('department').value;
+    if (donViVal === 'KHAC') {
+      donViVal = document.getElementById('customDepartment').value.trim();
+      if (!donViVal) {
+        Swal.fire('Thiếu thông tin', 'Vui lòng nhập tên đơn vị mới!', 'warning');
+        document.getElementById('customDepartment').focus();
+        return;
+      }
+    }
+
     let btn = document.getElementById('btnSubmit');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang lưu vào Sheets...';
 
     let data = {
-      cccd: document.getElementById('idNumber').value,
+      cccd: cccdVal,
       oldId: document.getElementById('oldId').value,
-      hoTen: document.getElementById('fullName').value,
+      hoTen: document.getElementById('fullName').value.trim(),
       gioiTinh: document.getElementById('gender').value,
       ngaySinh: document.getElementById('dateOfBirth').value,
       tuoi: document.getElementById('age').value,
       nhomTuoi: document.getElementById('ageGroup').value,
       diaChi: document.getElementById('address').value,
-      soDienThoai: document.getElementById('phone').value,
-      donVi: document.getElementById('department').value
+      soDienThoai: phoneVal,
+      donVi: donViVal
     };
 
     fetch(SCRIPT_URL, {
@@ -266,6 +373,9 @@
       if (res.status === 'success') {
         Swal.fire('Thành công', res.message, 'success');
         document.getElementById('formHoSo').reset();
+        document.getElementById('cccdCount').textContent = '0/12';
+        document.getElementById('cccdCount').className = 'char-count';
+        document.getElementById('customDeptBox').classList.add('d-none');
         document.getElementById('generalAddScanner').focus();
       } else {
         Swal.fire('Lỗi', res.message, 'error');
