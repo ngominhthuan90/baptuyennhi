@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hệ Thống Tiếp Nhận & Quét CCCD</title>
+  <title>Hệ Thống Tiếp Nhận & Quét CCCD / BHYT</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -95,6 +95,7 @@
       margin-bottom: 6px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
     }
 
     .scanner-input {
@@ -225,19 +226,20 @@
       <a href="javascript:void(0)" onclick="window.location.href='index.html'" class="btn-back-menu position-absolute start-0 top-50 translate-middle-y ms-3">
         <i class="fa-solid fa-arrow-left me-1"></i> Trang Chủ
       </a>
-      <h5><i class="fa-solid fa-hospital-user me-2"></i>TIẾP NHẬN NHANH</h5>
-      <div class="subtitle">Bắp Minh Thuận thử làm xem thế nào</div>
+      <h5><i class="fa-solid fa-hospital-user me-2"></i>TIẾP NHẬN & QUÉT CCCD / BHYT</h5>
+      <div class="subtitle">Đồng bộ tự động dữ liệu khám sức khỏe Google Sheets</div>
     </div>
 
     <div class="card-body p-4">
-      <!-- 1. Vùng nhận dữ liệu máy quét cầm tay -->
+      <!-- 1. Vùng nhận dữ liệu đa năng: Máy quét CCCD & Dán chuỗi tra cứu BHXH -->
       <div class="scanner-box">
         <div class="scanner-title">
-          <i class="fa-solid fa-barcode me-2"></i>Cái nào quét được QR đem ra thử đi ba:
+          <span><i class="fa-solid fa-barcode me-2"></i>Quét CCCD hoặc Dán thông tin tra cứu BHXH:</span>
+          <span class="badge bg-warning text-dark small"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Tự bóc tách</span>
         </div>
         <textarea id="generalAddScanner" class="form-control scanner-input" rows="2" 
                   autocomplete="off" autocapitalize="off" spellcheck="false" 
-                  placeholder="Đặt con trỏ vào đây rồi bấm cò quét mã QR trên thẻ CCCD..." 
+                  placeholder="Quét mã QR CCCD HOẶC dán toàn bộ đoạn kết quả tra cứu từ cổng BHXH vào đây..." 
                   onkeydown="handleScannerKey(event)" 
                   oninput="handleScannerInput(this)"></textarea>
       </div>
@@ -279,8 +281,8 @@
                    placeholder="NGUYỄN VĂN A" oninput="this.value = this.value.toUpperCase()">
           </div>
           <div class="col-4">
-            <label class="form-label">Số CMND cũ</label>
-            <input type="text" class="form-control" id="oldId" maxlength="12" placeholder="9 hoặc 12 số">
+            <label class="form-label">Mã thẻ BHYT / CMND</label>
+            <input type="text" class="form-control" id="oldId" placeholder="Mã thẻ BHYT hoặc CMND">
           </div>
         </div>
 
@@ -423,21 +425,94 @@
     }
   }
 
-  // 5. Bắt sự kiện máy quét mã vạch cầm tay
+  // 5. Bắt sự kiện máy quét hoặc khi người dùng dán (Paste)
   function handleScannerKey(e) {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
-      parseQR(e.target.value);
+      phanTichDuLieuTongHop(e.target.value);
       e.target.value = '';
     }
   }
 
   function handleScannerInput(elem) {
     let val = elem.value.trim();
-    if ((val.match(/\|/g) || []).length >= 5) {
-      parseQR(val);
+    // Tự động phân tích ngay khi dán chuỗi BHXH hoặc quét CCCD
+    if (val.includes('Mã thẻ:') || val.includes('Họ tên:') || (val.match(/\|/g) || []).length >= 5) {
+      phanTichDuLieuTongHop(val);
       elem.value = '';
     }
+  }
+
+  // HÀM XỬ LÝ ĐA NĂNG: Tự nhận biết chuỗi CCCD hay chuỗi Cổng BHXH
+  function phanTichDuLieuTongHop(text) {
+    if (!text) return;
+
+    // Trường hợp A: Chuỗi tra cứu từ Cổng BHXH / BHYT
+    if (text.includes('Mã thẻ:') || text.includes('Họ tên:')) {
+      xuLyChuoiBHXH(text);
+      return;
+    }
+
+    // Trường hợp B: Chuỗi quét mã QR CCCD (có dấu |)
+    if (text.includes('|')) {
+      parseQR(text);
+      return;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Không nhận diện được định dạng',
+      text: 'Vui lòng quét mã QR CCCD hoặc dán chuỗi tra cứu từ Cổng BHXH.',
+      confirmButtonColor: '#9c4221'
+    });
+  }
+
+  // HÀM BÓC TÁCH CHUỖI CỔNG BHXH / BHYT VIỆT NAM
+  function xuLyChuoiBHXH(raw) {
+    // 1. Họ và tên
+    let nameMatch = raw.match(/Họ\s*tên\s*:\s*([^,!\n]+)/i);
+    if (nameMatch) {
+      document.getElementById('fullName').value = nameMatch[1].trim().toUpperCase();
+    }
+
+    // 2. Mã thẻ BHYT
+    let cardMatch = raw.match(/Mã\s*thẻ\s*:\s*([A-Z0-9]+)/i);
+    if (cardMatch) {
+      document.getElementById('oldId').value = cardMatch[1].trim();
+    }
+
+    // 3. Ngày sinh (dd/mm/yyyy)
+    let dobMatch = raw.match(/Ngày\s*sinh\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4})/i);
+    if (dobMatch) {
+      document.getElementById('dateOfBirth').value = dobMatch[1].trim();
+      tinhTuoi();
+    }
+
+    // 4. Giới tính
+    let genderMatch = raw.match(/Giới\s*tính\s*:\s*(Nam|Nữ)/i);
+    if (genderMatch) {
+      document.getElementById('gender').value = (genderMatch[1].toLowerCase() === 'nam') ? 'Nam' : 'Nữ';
+    }
+
+    // 5. Địa chỉ cư trú
+    let addrMatch = raw.match(/ĐC\s*:\s*([^;!\)]+)/i);
+    if (addrMatch) {
+      document.getElementById('address').value = addrMatch[1].trim();
+    }
+
+    // Nhắc nhở nhập số CCCD nếu chưa có
+    let cccdInput = document.getElementById('idNumber');
+    if (!cccdInput.value) {
+      cccdInput.focus();
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Đã bóc tách thông tin BHXH!',
+      text: 'Họ tên, ngày sinh, giới tính, địa chỉ và mã thẻ BHYT đã được tự động điền.',
+      timer: 2000,
+      showConfirmButton: false
+    });
   }
 
   // 6. Quét QR bằng Camera điện thoại
@@ -457,7 +532,7 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText) => {
-          parseQR(decodedText);
+          phanTichDuLieuTongHop(decodedText);
           toggleCamera();
         }
       );
@@ -600,7 +675,6 @@
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN TIẾP NHẬN';
 
-      // Xử lý thông minh: Dù Google trả về JSON hay chuỗi hàm JSONP thì dữ liệu vẫn đã ghi vào Sheets thành công
       let isSuccess = false;
       let msg = "Đã tiếp nhận thành công hồ sơ " + data.hoTen;
       
@@ -611,7 +685,6 @@
           msg = json.message || msg;
         }
       } catch (errParse) {
-        // Nếu kết quả trả về text (kể cả có chứa loadDanhMuc...) -> Sheets đã ghi nhận
         if (text.includes("success") || text.includes("loadDanhMuc") || text.length > 0) {
           isSuccess = true;
         }
@@ -646,7 +719,6 @@
     .catch(err => {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-2"></i>LƯU THÔNG TIN TIẾP NHẬN';
-      // Dù gặp cảnh báo mạng nhưng dữ liệu đã được gửi sang Google Apps Script
       Swal.fire({
         icon: 'success',
         title: 'Đã gửi hồ sơ!',
