@@ -11,14 +11,14 @@
 
   <style>
     :root {
-      --autumn-primary: #9c4221;       /* Terracotta ấm áp */
+      --autumn-primary: #9c4221;
       --autumn-primary-hover: #7c3114;
-      --autumn-secondary: #c86d3b;     /* Cam cháy / Quế */
-      --autumn-accent: #d97706;        /* Hổ phách / Lá phong */
-      --autumn-bg: #fbf8f5;            /* Nền be kem dịu mắt */
+      --autumn-secondary: #c86d3b;
+      --autumn-accent: #d97706;
+      --autumn-bg: #fbf8f5;
       --autumn-card-bg: #ffffff;
       --autumn-border: #ebdcd0;
-      --autumn-text-main: #3d2314;     /* Nâu hạt dẻ đậm */
+      --autumn-text-main: #3d2314;
       --autumn-text-muted: #7c685b;
       --autumn-scanner-bg: #fef7ee;
       --autumn-scanner-border: #f3c292;
@@ -325,7 +325,10 @@
         <div class="mb-2">
           <label class="form-label">Đơn vị / Trạm y tế / Trường học <span class="text-danger">*</span></label>
           <select class="form-select" id="department" required onchange="thayDoiDonVi(this)">
-            <option value="">-- Đang đồng bộ từ Google Sheets... --</option>
+            <option value="">-- Chọn đơn vị tiếp nhận --</option>
+            <option value="Bắc Tân Uyên">Bắc Tân Uyên</option>
+            <option value="TYT Bình Cơ">TYT Bình Cơ</option>
+            <option value="KHAC">-- Khác (Tự nhập tên đơn vị mới) --</option>
           </select>
         </div>
 
@@ -343,36 +346,44 @@
 </div>
 
 <script>
-  // Link Web App Google Apps Script
+  // Link Web App Google Apps Script chuẩn xác từ file của bạn
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6ViYIxCgI8/exec";
+
   let html5Scanner;
   let isScanning = false;
 
   window.onload = function() {
     let scannerInput = document.getElementById('generalAddScanner');
     if (scannerInput) scannerInput.focus();
+
+    // Tự động kết nối Google Apps Script để tải thêm đơn vị mới từ sheet DANH_MUC
+    try {
+      let scriptTag = document.createElement('script');
+      scriptTag.src = SCRIPT_URL + "?callback=loadDanhMuc";
+      document.body.appendChild(scriptTag);
+    } catch (e) {
+      console.log("Dùng danh sách mặc định:", e);
+    }
   };
 
-  // 1. Nhận danh mục tự động từ Google Sheets (JSONP)
+  // 1. Nhận danh mục tự động từ Google Sheets (JSONP) và cập nhật thêm
   function loadDanhMuc(danhMuc) {
     let sel = document.getElementById('department');
     if (!sel) return;
-    sel.innerHTML = '<option value="">-- Chọn đơn vị tiếp nhận --</option>';
     
     if (Array.isArray(danhMuc) && danhMuc.length > 0) {
+      sel.innerHTML = '<option value="">-- Chọn đơn vị tiếp nhận --</option>';
       danhMuc.forEach(item => {
         let opt = document.createElement('option');
         opt.value = item;
         opt.textContent = item;
         sel.appendChild(opt);
       });
+      let optKhac = document.createElement('option');
+      optKhac.value = 'KHAC';
+      optKhac.textContent = '-- Khác (Tự nhập tên đơn vị mới) --';
+      sel.appendChild(optKhac);
     }
-    
-    // Tùy chọn nhập tay linh hoạt
-    let optKhac = document.createElement('option');
-    optKhac.value = 'KHAC';
-    optKhac.textContent = '-- Khác (Tự nhập tên đơn vị mới) --';
-    sel.appendChild(optKhac);
   }
 
   // 2. Ràng buộc CCCD: Chỉ cho nhập số, giới hạn 12 số và đếm ký tự
@@ -626,8 +637,5 @@
     });
   }
 </script>
-
-<!-- TỰ ĐỘNG HÚT DANH MỤC TỪ GOOGLE SHEETS QUA JSONP -->
-<script src="https://script.google.com/macros/s/AKfycbzU4SBwxOb43OX3ewJKgLpg1iOuxFlWr6ZOiuveJUvW_Qt8OyhnVCUywM6W9tqKj8tL/exec?callback=loadDanhMuc"></script>
 </body>
 </html>
