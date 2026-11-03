@@ -1,4 +1,4 @@
-/* Gọi số khám bệnh - BVĐK Bình Dương CS2. Tự chạy khi mở trang /clinic-queue (Shadow DOM, không ảnh hưởng CSS của web).
+/* Gọi số khám bệnh - Học hỏi Anh Hoàng ANh. Tự chạy khi mở trang /clinic-queue (Shadow DOM, không ảnh hưởng CSS của web).
    Giọng ghi sẵn nằm trong clinic-queue-voice.js (đã mã hóa), chỉ tải khi máy đã kích hoạt. */
 (function(){
 var BASE=((document.currentScript&&document.currentScript.src)||"").replace(/[^\/]*$/,"");
